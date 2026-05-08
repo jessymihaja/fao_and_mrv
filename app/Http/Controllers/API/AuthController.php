@@ -67,4 +67,31 @@ class AuthController extends Controller
     {
         return response()->json($request->user());
     }
+
+    public function getUsersPaginated(Request $request)
+{
+    $perPage = $request->per_page ?? 15;
+
+    $users = User::paginate($perPage);
+
+    $users->getCollection()->transform(function ($user) {
+
+        return [
+            'id' => $user->id_utilisateur ?? $user->id,
+
+            // IMPORTANT : le front attend probablement "name"
+            'name' => trim(($user->prenom ?? '') . ' ' . ($user->nom ?? '')),
+
+            'email' => $user->email,
+
+            'role' => $user->role ?? null,
+
+            'is_active' => $user->status ?? 'true',
+
+            'created_at' => $user->created_at,
+        ];
+    });
+
+    return response()->json($users);
+}
 }

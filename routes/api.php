@@ -46,14 +46,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/chatbot-knowledges', [ChatbotKnowledgeController::class, 'index']);
 
     Route::get('/projets', [ProjetController::class, 'index']);
+    Route::get('/projets-paginated', [ProjetController::class, 'getPaginatedProjects']);
     Route::get('/projets/number', [ProjetController::class, 'projectsNumber']);
     Route::get('/projets/number-active', [ProjetController::class, 'projectsNumberActive']);
     Route::get('/projets/filter', [ProjetController::class, 'projectsfilter']);
     Route::get('/projets/{id}', [ProjetController::class, 'show']);
 
-    Route::get('/financements', [FinancementController::class, 'index']);
+    Route::get('/financements', [FinancementController::class, 'getFinancements']);
+    Route::get('/fundings', [FinancementController::class, 'index']);
     Route::get('/financements/number', [FinancementController::class, 'financementsNumber']);
     Route::get('/financements/{id}', [FinancementController::class, 'show']);
+    Route::get('/financements-totaux', [FinancementController::class, 'financementsTotauxMGA']);
     Route::get('/devises', [DeviseController::class, 'index']);
             // --- HERO ---
         Route::post('/heros', [HeroController::class, 'store']);
@@ -107,6 +110,8 @@ Route::middleware('auth:sanctum')->group(function () {
         
     // admin + gestionnaire
     Route::middleware('role:admin,gestionnaire')->group(function () {
+        // --- USERS ---
+        Route::get('/users', [AuthController::class, 'getUsersPaginated']);
         // --- CLASSIFICATIONS ---
         Route::post('/classifications', [ClassificationController::class, 'store']);
         Route::put('/classifications/{id}', [ClassificationController::class, 'update']);

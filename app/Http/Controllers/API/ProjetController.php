@@ -20,6 +20,40 @@ class ProjetController extends Controller
 
         return response()->json($projets);
     }
+    public function getPaginatedProjects(Request $request)
+{
+    $perPage = $request->per_page ?? 15;
+
+    $projets = Projet::with([
+        'utilisateur',
+        'status',
+        'classification',
+        'zoneGeographique',
+        'updater'
+    ])->paginate($perPage);
+
+    $projets->getCollection()->transform(function ($projet) {
+
+        return [
+            'id' => $projet->id_projet,
+            'titre' => $projet->nom,
+
+            // IMPORTANT : string et non objet
+            'classification' => $projet->classification?->designation,
+
+            'status' => $projet->status?->designation,
+
+            'zoneGeographique' => $projet->zoneGeographique?->designation,
+
+            'utilisateur' => $projet->utilisateur,
+            'updater' => $projet->updater,
+
+            'created_at' => $projet->created_at,
+        ];
+    });
+
+    return response()->json($projets);
+}
 
     public function show($id) {
     // On ajoute toutes les relations manquantes dans le 'with'

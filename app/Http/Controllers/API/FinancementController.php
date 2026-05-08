@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Models\Financement;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class FinancementController extends Controller
 {
@@ -13,11 +14,47 @@ class FinancementController extends Controller
         $financements = Financement::with([
             'projet',
             'devise',
-            'utilisateur',])
-                    ->get();
+            'utilisateur',
+        ])->get();
 
-        return response()->json($financements); 
+        return response()->json($financements);
     }
+   public function getFinancements(Request $request)
+{   
+    $per_page = $request->per_page ?? 15;
+
+    $financements = Financement::with([
+        'projet',
+        'devise',
+        'utilisateur',
+    ])->paginate($per_page);
+
+    $financements->getCollection()->transform(function ($financement) {
+
+        return [
+            'id' => $financement->id_financement,
+
+            'budget_approuve' => $financement->montant,
+
+            'source_financement' => $financement->financeur,
+
+            'montant_mga' => $financement->montant_MGA,
+
+            // IMPORTANT : string au lieu d'objet
+            'devise' => $financement->devise?->code,
+
+            'projet' => $financement->projet?->nom_projet,
+
+            'projet_id' => $financement->projet?->id_projet,
+
+            'utilisateur' => $financement->utilisateur?->nom,
+
+            'created_at' => $financement->created_at,
+        ];
+    });
+
+    return response()->json($financements);
+}
 
     public function show($id)
     {
@@ -91,5 +128,16 @@ class FinancementController extends Controller
             'count' => $count
         ]);
     }
+public function financementsTotauxMGA()
+{
+    $totaux = Financement::selectRaw('SUM("montant_MGA" * montant) as total')
+        ->first();
+
+    return response()->json([
+        'total_count' => Financement::count(),
+        'totaux_MGA' => $totaux->total
+    ]);
+}
+        
 
 }
