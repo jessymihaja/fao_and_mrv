@@ -13,6 +13,9 @@ class ZoneGeographique extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'designation',
+        'nom',
+        'code',
+        'latitude',
+        'longitude'
     ];
 }

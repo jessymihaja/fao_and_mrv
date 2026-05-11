@@ -13,7 +13,10 @@ return new class extends Migration
     {
         Schema::create('zone_geographiques', function (Blueprint $table) {
             $table->id('id_zone_geographique');
-            $table->string('designation');
+            $table->string('nom');
+            $table->string('code');
+            $table->decimal('latitude',10,8);
+            $table->decimal('longitude',10,8);
             $table->timestamp('created_at')->useCurrent();
         });
     }

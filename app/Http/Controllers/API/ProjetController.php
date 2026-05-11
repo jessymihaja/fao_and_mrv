@@ -5,17 +5,15 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Models\Projet;
 use Illuminate\Http\Request;
+use App\Services\ActivityLogService;
 
 class ProjetController extends Controller
 {
     public function index()
     {
         $projets = Projet::with([
-            'utilisateur',
             'status',
-            'classification', 
-            'zoneGeographique',
-            'updater'])
+            'classification'])
                     ->get();
 
         return response()->json($projets);
@@ -25,11 +23,8 @@ class ProjetController extends Controller
     $perPage = $request->per_page ?? 15;
 
     $projets = Projet::with([
-        'utilisateur',
         'status',
         'classification',
-        'zoneGeographique',
-        'updater'
     ])->paginate($perPage);
 
     $projets->getCollection()->transform(function ($projet) {
@@ -43,11 +38,6 @@ class ProjetController extends Controller
 
             'status' => $projet->status?->designation,
 
-            'zoneGeographique' => $projet->zoneGeographique?->designation,
-
-            'utilisateur' => $projet->utilisateur,
-            'updater' => $projet->updater,
-
             'created_at' => $projet->created_at,
         ];
     });
@@ -58,32 +48,35 @@ class ProjetController extends Controller
     public function show($id) {
     // On ajoute toutes les relations manquantes dans le 'with'
     $projet = Projet::with([
-        'utilisateur', 
         'status', 
         'classification', 
-        'zoneGeographique', 
         'entiteAccreditee', 
         'domaineIntervention', 
-        'updater'
     ])->findOrFail($id);
 
     // Retourne l'objet directement
     return response()->json($projet);
 }
 
-    public function store(Request $request)
+    /*public function store(Request $request)
     {
         $request->validate([
-            'id_utilisateur' => 'required|integer',
-            'nom' => 'required|string',
+            'titre' => 'required|string',
             'date_debut' => 'required|date',
             'date_fin' => 'required|date|after_or_equal:date_debut',
             'description' => 'nullable|string',
             'classification_id' => 'required|integer',
             'status_id' => 'required|integer',
-            'zone_geographique_id' => 'required|integer',
+            'region_id' => 'required|integer',
+            'district_id' => 'required|integer',
+            'commune_id' => 'required|integer',
+            'fokontany_id' => 'required|integer',
+            'province_id' => 'required|integer',
             'entite_accreditee_id' => 'required|integer',
             'domaine_intervention_id' => 'required|integer',
+            'is_published' => 'required|boolean',
+            'latitude' => 'required|numeric',
+            'longitude' => 'required|numeric'
         ]);
 
         $projet = Projet::create($request->all());
@@ -91,6 +84,103 @@ class ProjetController extends Controller
         return response()->json([
             'message' => 'Créé',
             'data' => $projet,
+        ]);
+    }*/
+    private function sanitize(Request $request): void
+    {
+        $nullableFields = [
+            'description',
+            'domaine_intervention_id',
+            'classification_id',
+            'status_id',
+            'entite_accreditee_id',
+            'date_debut',
+            'date_fin',
+            'latitude',
+            'longitude',
+            'province_id',
+            'region_id',
+            'district_id',
+            'commune_id',
+            'fokontany_id',
+            'zone_description',
+            'geo_address',
+            'objectifs',
+            'impact',
+            'problematique_climatique',
+        ];
+
+        $data = $request->all();
+
+        foreach ($nullableFields as $field) {
+            if (array_key_exists($field, $data) && $data[$field] === '') {
+                $data[$field] = null;
+            }
+        }
+
+        // is_published : normalise true/false/1/0/"true"/"false" -> booléen PHP
+        if (array_key_exists('is_published', $data)) {
+            $val = $data['is_published'];
+            $data['is_published'] = filter_var($val, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? false;
+        }
+
+        $request->replace($data);
+    }
+
+    private function validationRules(bool $isUpdate = false): array
+    {
+        // Utiliser une variable pour éviter les problèmes avec les accents dans in:
+        $statutValues = implode(',', ['Concept Note', 'Funding Proposal', 'En cours', 'Clôturé']);
+
+        $rules = [
+            'titre'                    => 'string|max:255',
+            'status_id'                => 'required|integer|exists:statuses,id_status',
+            'classification_id'        => 'required|integer|exists:classifications,id_classification',
+            'entite_accreditee_id'     => 'required|integer|exists:entite_accreditees,id_entite_accreditee',
+            'domaine_intervention_id'  => 'required|integer|exists:domaine_interventions,id_domaine_intervention',
+            'description'              => 'nullable|string',
+            'date_debut'               => 'nullable|date',
+            'date_fin'                 => 'nullable|date',
+            'latitude'                 => 'nullable|numeric|between:-90,90',
+            'longitude'                => 'nullable|numeric|between:-180,180',
+            'province_id'              => 'nullable|integer|exists:provinces,id',
+            'region_id'                => 'nullable|integer|exists:regions,id',
+            'district_id'              => 'nullable|integer|exists:districts,id',
+            'commune_id'               => 'nullable|integer|exists:communes,id',
+            'fokontany_id'             => 'nullable|integer|exists:fokontany,id',
+            'zone_description'         => 'nullable|string',
+            'geo_address'              => 'nullable|string|max:500',
+            'objectifs'                => 'nullable|string',
+            'impact'                   => 'nullable|string',
+            'problematique_climatique' => 'nullable|string',
+            'is_published'             => 'nullable|boolean',
+        ];
+
+
+        if ($isUpdate) {
+            foreach ($rules as $field => $rule) {
+                $rules[$field] = 'sometimes|' . $rule;
+            }
+            $rules['titre']  = 'sometimes|string|max:255';
+        } else {
+            $rules['titre']             = 'required|string|max:255';
+        }
+
+        return $rules;
+    }
+
+    // ADMIN: Créer
+    public function store(Request $request)
+    {
+        $this->sanitize($request);
+        $validated = $request->validate($this->validationRules(false));
+        $validated['is_published'] = $validated['is_published'] ?? false;
+
+        $project = Projet::create($validated);
+
+        return response()->json([
+            'message' => 'Créé',
+            'data' => $project,
         ]);
     }
 
@@ -106,7 +196,10 @@ class ProjetController extends Controller
             'description' => 'nullable|string',
             'classification_id' => 'required|integer',
             'status_id' => 'required|integer',
-            'zone_geographique_id' => 'required|integer',
+            'region_id' => 'required|integer',
+            'district_id' => 'required|integer',
+            'commune_id' => 'required|integer',
+            'fokontany_id' => 'required|integer',
             'entite_accreditee_id' => 'required|integer',
             'domaine_intervention_id' => 'required|integer',
         ]);

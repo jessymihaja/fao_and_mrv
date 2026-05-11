@@ -17,6 +17,7 @@ use App\Http\Controllers\API\FaqsController;
 use App\Http\Controllers\API\PartnerController;
 use App\Http\Controllers\API\ContactController;
 use App\Http\Controllers\API\SliderController;
+use App\Http\Controllers\API\GeoController;
 
 use Illuminate\Support\Facades\Route;
 
@@ -152,7 +153,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/financements/{id}', [FinancementController::class, 'update']);
         Route::delete('/financements/{id}', [FinancementController::class, 'destroy']);
 
-
+        // --- GEOS ---
+        Route::get('/geo/provinces',               [GeoController::class, 'provinces']);
+        Route::get('/geo/regions/{province_id?}',  [GeoController::class, 'regions']);
+        Route::get('/geo/districts/{region_id?}',  [GeoController::class, 'districts']);
+        Route::get('/geo/communes/{district_id?}', [GeoController::class, 'communes']);
+        Route::get('/geo/fokontany/{commune_id?}', [GeoController::class, 'fokontany']);
 
     });
 
