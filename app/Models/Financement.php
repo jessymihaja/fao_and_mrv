@@ -5,36 +5,42 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Projet;
 use App\Models\Devise;
+use App\Models\Document;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Financement extends Model
 {
     protected $table = 'financements';
 
-    protected $primaryKey = 'id_financement';
-
-    public $timestamps = false;
+    use HasFactory;
 
     protected $fillable = [
-        'id_financement',
         'projet_id',
-        'financeur',
-        'montant',
-        'devise_id',
-        'montant_MGA',
-        'date_financement',
-        'utilisateur_id',
-        'id_utilisateur_updater',
-
+        'source_financement',
+        'budget_approuve',
+        'devise',
+        'montant_mga',
+        'date_approbation',
     ];
-    public function projet(){
-        return $this->belongsTo('App\Models\Projet', 'projet_id');
+
+    protected function casts(): array
+    {
+        return [
+            'date_approbation' => 'date',
+            'budget_approuve'  => 'decimal:2',
+            'montant_mga'      => 'decimal:2',
+        ];
     }
-    public function devise(){
-        return $this->belongsTo('App\Models\Devise', 'devise_id');
+
+    public function projet(): BelongsTo
+    {
+        return $this->belongsTo(Projet::class);
     }
-    public function utilisateur(){
-        return $this->belongsTo('App\Models\User', 'utilisateur_id');
+    public function documents(): HasMany
+    {
+        return $this->hasMany(Document::class);
     }
 
 }

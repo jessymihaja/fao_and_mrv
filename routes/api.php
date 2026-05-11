@@ -53,11 +53,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/projets/filter', [ProjetController::class, 'projectsfilter']);
     Route::get('/projets/{id}', [ProjetController::class, 'show']);
 
-    Route::get('/financements', [FinancementController::class, 'getFinancements']);
+    Route::get('/projets/{id}/financements', [FinancementController::class, 'byProject']);
+    Route::get('/financements', [FinancementController::class, 'index']);
     Route::get('/fundings', [FinancementController::class, 'index']);
     Route::get('/financements/number', [FinancementController::class, 'financementsNumber']);
     Route::get('/financements/{id}', [FinancementController::class, 'show']);
     Route::get('/financements-totaux', [FinancementController::class, 'financementsTotauxMGA']);
+    
     Route::get('/devises', [DeviseController::class, 'index']);
             // --- HERO ---
         Route::post('/heros', [HeroController::class, 'store']);

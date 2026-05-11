@@ -6,80 +6,31 @@ use App\Http\Controllers\Controller;
 use App\Models\Financement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\JsonResponse;
 
 class FinancementController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $financements = Financement::with([
-            'projet',
-            'devise',
-            'utilisateur',
-        ])->get();
+        $financements = Financement::with('projet')
+            ->when($request->filled('projet_id'),         fn ($q) => $q->where('projet_id', $request->integer('projet_id')))
+            ->when($request->filled('source_financement'), fn ($q) => $q->where('source_financement', 'ilike', "%{$request->source_financement}%"))
+            ->orderByDesc('date_approbation')
+            ->paginate($request->integer('per_page', 15));
 
-        return response()->json($financements);
-    }
-   public function getFinancements(Request $request)
-{   
-    $per_page = $request->per_page ?? 15;
-
-    $financements = Financement::with([
-        'projet',
-        'devise',
-        'utilisateur',
-    ])->paginate($per_page);
-
-    $financements->getCollection()->transform(function ($financement) {
-
-        return [
-            'id' => $financement->id_financement,
-
-            'budget_approuve' => $financement->montant,
-
-            'source_financement' => $financement->financeur,
-
-            'montant_mga' => $financement->montant_MGA,
-
-            // IMPORTANT : string au lieu d'objet
-            'devise' => $financement->devise?->code,
-
-            'projet' => $financement->projet?->nom_projet,
-
-            'projet_id' => $financement->projet?->id_projet,
-
-            'utilisateur' => $financement->utilisateur?->nom,
-
-            'created_at' => $financement->created_at,
-        ];
-    });
-
-    return response()->json($financements);
-}
-
-    public function show($id)
-    {
-        $financement = Financement::
-        with([
-            'projet',
-            'devise',
-            'utilisateur',])
-            ->findOrFail($id);
-            
-        return response()->json([
-            $financement,
-        ]);
+            return response()->json($financements);
     }
 
     public function store(Request $request)
     {
         $request->validate([
             'projet_id' => 'required|integer',
-            'financeur' => 'required|string',
-            'montant' => 'required|numeric',
-            'devise_id' => 'required|integer',
-            'montant_MGA' => 'required|numeric',
-            'date_financement' => 'required|date',
-            'utilisateur_id' => 'required|integer',
+            'source_financement' => 'required|string',
+            'budget_approuve' => 'required|numeric',
+            'devise' => 'required|string',
+            'montant_mga' => 'required|numeric',
+            'date_approbation' => 'required|date',
         ]);
 
         $financement = Financement::create($request->all());
@@ -89,19 +40,17 @@ class FinancementController extends Controller
             'data' => $financement,
         ]);
     }
-
     public function update(Request $request, $id)
     {
         $financement = Financement::findOrFail($id);
 
         $request->validate([
             'projet_id' => 'required|integer',
-            'financeur' => 'required|string',
-            'montant' => 'required|numeric',
-            'devise_id' => 'required|integer',
-            'montant_MGA' => 'required|numeric',
-            'date_financement' => 'required|date',
-            'id_utilisateur_updater' => 'required|integer',
+            'source_financement' => 'required|string',
+            'budget_approuve' => 'required|numeric',
+            'devise' => 'required|string',
+            'montant_mga' => 'required|numeric',
+            'date_approbation' => 'required|date'
         ]);
 
         $financement->update($request->all());
@@ -122,6 +71,9 @@ class FinancementController extends Controller
             'message' => 'Supprimé',
         ]);
     }
+
+
+
     public function financementsNumber(){
         $count = Financement::count();
         return response()->json([
@@ -130,14 +82,43 @@ class FinancementController extends Controller
     }
 public function financementsTotauxMGA()
 {
-    $totaux = Financement::selectRaw('SUM("montant_MGA" * montant) as total')
+    $totaux = Financement::selectRaw('SUM("montant_mga" * budget_approuve) as total')
         ->first();
+        $totalUSD = Financement::where('devise', 'USD')->sum('budget_approuve');
+        $totalEUR = Financement::where('devise', 'EUR')->sum('budget_approuve');
+        $totalAR  = Financement::where('devise', 'AR')->sum('budget_approuve');
+
 
     return response()->json([
         'total_count' => Financement::count(),
-        'totaux_MGA' => $totaux->total
+        'totaux_MGA' => $totaux->total,
+        'totaux' => [
+            'USD' => (float) $totalUSD,
+            'EUR' => (float) $totalEUR,
+            'AR'  => (float) $totalAR
+        ],
     ]);
 }
+
+public function byProject(int $projectId): JsonResponse
+{
+    // On récupère les données brutes sans charger la relation 'projets'
+    $financements = Financement::where('projet_id', $projectId)
+        ->orderByDesc('date_approbation')
+        ->get();
+
+    return response()->json([
+        // On passe directement la collection ici
+        'data'   => $financements, 
+        'totaux' => [
+            'AR'  => (float) $financements->where('devise', 'AR')->sum('budget_approuve'),
+            'USD' => (float) $financements->where('devise', 'USD')->sum('budget_approuve'),
+            'EUR' => (float) $financements->where('devise', 'EUR')->sum('budget_approuve'),
+            'MGA' => (float) $financements->sum('montant_mga'),
+        ],
+    ]);
+}
+
         
 
 }

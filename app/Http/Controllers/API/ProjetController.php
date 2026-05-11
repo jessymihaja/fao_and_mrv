@@ -25,28 +25,15 @@ class ProjetController extends Controller
     $projets = Projet::with([
         'status',
         'classification',
+        'entiteAccreditee',
+        'domaineIntervention',
     ])->paginate($perPage);
 
-    $projets->getCollection()->transform(function ($projet) {
-
-        return [
-            'id' => $projet->id_projet,
-            'titre' => $projet->nom,
-
-            // IMPORTANT : string et non objet
-            'classification' => $projet->classification?->designation,
-
-            'status' => $projet->status?->designation,
-
-            'created_at' => $projet->created_at,
-        ];
-    });
-
+    
     return response()->json($projets);
 }
 
     public function show($id) {
-    // On ajoute toutes les relations manquantes dans le 'with'
     $projet = Projet::with([
         'status', 
         'classification', 
@@ -54,7 +41,6 @@ class ProjetController extends Controller
         'domaineIntervention', 
     ])->findOrFail($id);
 
-    // Retourne l'objet directement
     return response()->json($projet);
 }
 

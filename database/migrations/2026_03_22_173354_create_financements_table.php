@@ -12,22 +12,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('financements', function (Blueprint $table) {
-            $table->id('id_financement');
+             $table->id();
             $table->unsignedBigInteger('projet_id');
-            $table->string('financeur');
-            $table->decimal('montant', 15, 2);
-            $table->unsignedBigInteger('devise_id');
-            $table->decimal('montant_MGA', 15, 2);
-            $table->date('date_financement');
-            $table->unsignedBigInteger('utilisateur_id');
-            $table->timestamp('created_at')->useCurrent();
-            $table->timestamp('updated_at')->useCurrentOnUpdate()->useCurrent();
-            $table->unsignedBigInteger('id_utilisateur_updater')->nullable();
+            $table->string('source_financement');           // Nom du financeur
+            $table->decimal('budget_approuve', 20, 2);      // Montant approuvé
+            $table->enum('devise', ['AR', 'USD', 'EUR'])->default('USD');
+            $table->decimal('montant_mga', 20, 2);          // Équivalent en MGA
+            $table->date('date_approbation');               // Date de financement
+            $table->timestamps();
 
             $table->foreign('projet_id')->references('id_projet')->on('projets')->onDelete('cascade');
-            $table->foreign('utilisateur_id')->references('id_utilisateur')->on('utilisateurs')->onDelete('cascade');
-            $table->foreign('id_utilisateur_updater')->references('id_utilisateur')->on('utilisateurs')->onDelete('set null');
-            $table->foreign('devise_id')->references('id_devise')->on('devises')->onDelete('set null');
 
         });
     }
