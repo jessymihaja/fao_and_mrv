@@ -18,7 +18,9 @@ use App\Http\Controllers\API\PartnerController;
 use App\Http\Controllers\API\ContactController;
 use App\Http\Controllers\API\SliderController;
 use App\Http\Controllers\API\GeoController;
-
+use App\Http\Controllers\API\DepenseController;
+use App\Http\Controllers\API\EngagementController;
+use App\Http\Controllers\API\DecaissementController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/test', function () {
@@ -52,6 +54,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/projets/number-active', [ProjetController::class, 'projectsNumberActive']);
     Route::get('/projets/filter', [ProjetController::class, 'projectsfilter']);
     Route::get('/projets/{id}', [ProjetController::class, 'show']);
+    Route::get('/projects/{id}/depenses', [DepenseController::class, 'projectDepenses']);
 
     Route::get('/projets/{id}/financements', [FinancementController::class, 'byProject']);
     Route::get('/financements', [FinancementController::class, 'index']);
@@ -59,6 +62,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/financements/number', [FinancementController::class, 'financementsNumber']);
     Route::get('/financements/{id}', [FinancementController::class, 'show']);
     Route::get('/financements-totaux', [FinancementController::class, 'financementsTotauxMGA']);
+
+    Route::get('/financements/{id}/engagements', [EngagementController::class, 'engagements']);
+    Route::get('/financements/{id}/decaissements', [DecaissementController::class, 'decaissements']);
+    
+
+    Route::get('/depenses',      [DepenseController::class, 'index']);
+    Route::get('/depenses/{id}', [DepenseController::class, 'show']);
     
     Route::get('/devises', [DeviseController::class, 'index']);
             // --- HERO ---
@@ -161,6 +171,21 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/geo/districts/{region_id?}',  [GeoController::class, 'districts']);
         Route::get('/geo/communes/{district_id?}', [GeoController::class, 'communes']);
         Route::get('/geo/fokontany/{commune_id?}', [GeoController::class, 'fokontany']);
+
+        // --- DEPENSES ---
+        Route::post  ('/depenses',                [DepenseController::class, 'store']);
+        Route::put   ('/depenses/{id}',           [DepenseController::class, 'update']);
+        Route::delete('/depenses/{id}',           [DepenseController::class, 'destroy']);
+
+        // --- ENGAGEMENTS ---
+        Route::post  ('/financements/{id}/engagements',  [EngagementController::class, 'storeEngagement']);
+        Route::put   ('/engagements/{id}',        [EngagementController::class, 'updateEngagement']);
+        Route::delete('/engagements/{id}',        [EngagementController::class, 'destroyEngagement']);
+
+        // --- DECAISSEMENTS ---
+        Route::post  ('/financements/{id}/decaissements',           [DecaissementController::class, 'storeDecaissement']);
+        Route::put   ('/decaissements/{id}',      [DecaissementController::class, 'updateDecaissement']);
+        Route::delete('/decaissements/{id}',      [DecaissementController::class, 'destroyDecaissement']);
 
     });
 

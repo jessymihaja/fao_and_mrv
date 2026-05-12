@@ -114,7 +114,7 @@ public function byProject(int $projectId): JsonResponse
             'AR'  => (float) $financements->where('devise', 'AR')->sum('budget_approuve'),
             'USD' => (float) $financements->where('devise', 'USD')->sum('budget_approuve'),
             'EUR' => (float) $financements->where('devise', 'EUR')->sum('budget_approuve'),
-            'MGA' => (float) $financements->sum('montant_mga'),
+            'MGA' => (float) Financement::where('projet_id', $projectId)->sum(DB::raw('montant_mga * budget_approuve'))
         ],
     ]);
 }
