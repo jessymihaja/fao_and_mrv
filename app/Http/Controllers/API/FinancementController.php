@@ -8,9 +8,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\JsonResponse;
+use App\Services\ActivityLogService;
 
 class FinancementController extends Controller
-{
+{   
+    public function __construct(
+        private readonly ActivityLogService $logService
+    ) {}
+
     public function index(Request $request)
     {
         $financements = Financement::with('projet')
@@ -34,6 +39,11 @@ class FinancementController extends Controller
         ]);
 
         $financement = Financement::create($request->all());
+        $this->logService->log(
+            'create', 'financement',
+            "Financement ajouté : {$financement->source_financement} — {$financement->budget_approuve} {$financement->devise}",
+            $financement->projet_id
+        );
 
         return response()->json([
             'message' => 'Créé',

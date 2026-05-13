@@ -21,7 +21,10 @@ use App\Http\Controllers\API\GeoController;
 use App\Http\Controllers\API\DepenseController;
 use App\Http\Controllers\API\EngagementController;
 use App\Http\Controllers\API\DecaissementController;
+use App\Http\Controllers\API\DocumentController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\API\StatsController;
+use App\Http\Controllers\API\ActivityLogController;
 
 Route::get('/test', function () {
     return response()->json([
@@ -34,6 +37,8 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::get('/heros', [HeroController::class, 'index']);
 Route::get('/maps/{id}', [MapController::class, 'show']);
 Route::get('/maps', [MapController::class, 'index']);
+Route::get('/documents/{id}/download', [DocumentController::class, 'download'])
+        ->middleware('signed')->name('documents.download');
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
@@ -65,6 +70,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/financements/{id}/engagements', [EngagementController::class, 'engagements']);
     Route::get('/financements/{id}/decaissements', [DecaissementController::class, 'decaissements']);
+
+    Route::get('/documents',                  [DocumentController::class, 'index']);
+    Route::get('/documents/{id}',             [DocumentController::class, 'show']);
+    Route::get('/documents/{id}/signed-url',  [DocumentController::class, 'signedUrl']);
     
 
     Route::get('/depenses',      [DepenseController::class, 'index']);
@@ -119,6 +128,15 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/sliders/{id}', [SliderController::class, 'destroy']);
         Route::get('/sliders', [SliderController::class, 'index']);
         Route::get('/sliders-public', [SliderController::class, 'active_sliders']);
+
+        // --- Statistiques ---
+        Route::get('/stats/global',             [StatsController::class, 'global']);
+        Route::get('/stats/projects-by-status', [StatsController::class, 'projectsByStatus']);
+        Route::get('/stats/budget-by-year',     [StatsController::class, 'budgetByYear']);
+        Route::get('/stats/projects-by-region', [StatsController::class, 'projectsByRegion']);
+
+        // --- ACTIVITY LOGS ---
+        Route::get('/activity-logs', [ActivityLogController::class, 'index']);
 
         
     // admin + gestionnaire
@@ -186,6 +204,18 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post  ('/financements/{id}/decaissements',           [DecaissementController::class, 'storeDecaissement']);
         Route::put   ('/decaissements/{id}',      [DecaissementController::class, 'updateDecaissement']);
         Route::delete('/decaissements/{id}',      [DecaissementController::class, 'destroyDecaissement']);
+
+        // --- DOCUMENTS ---
+        Route::post  ('/documents',      [DocumentController::class, 'store']);
+        Route::delete('/documents/{id}', [DocumentController::class, 'destroy']);
+
+        
+
+        // --- USERS ---
+        Route::put   ('/users/{id}/role',  [AuthController::class, 'updateRole']);
+        Route::put   ('/users/{id}/status', [AuthController::class, 'toggle']);
+        Route::put   ('/users/{id}/toggle',[AuthController::class, 'toggle']);
+        Route::put   ('/users/{id}',       [AuthController::class, 'update']);
 
     });
 

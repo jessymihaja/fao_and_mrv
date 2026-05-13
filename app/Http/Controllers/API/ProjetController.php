@@ -8,7 +8,12 @@ use Illuminate\Http\Request;
 use App\Services\ActivityLogService;
 
 class ProjetController extends Controller
-{
+{   
+    public function __construct(
+        private readonly ActivityLogService $logService
+    ) {
+    }
+
     public function index()
     {
         $projets = Projet::with([
@@ -163,6 +168,11 @@ class ProjetController extends Controller
         $validated['is_published'] = $validated['is_published'] ?? false;
 
         $project = Projet::create($validated);
+        $this->logService->log(
+            'create', 'projet',
+            "Projet créé : {$project->titre}",
+            $project->id_projet
+        );
 
         return response()->json([
             'message' => 'Créé',
@@ -175,17 +185,16 @@ class ProjetController extends Controller
         $projet = Projet::findOrFail($id);
 
         $request->validate([
-            'id_utilisateur_updater' => 'required|integer',
-            'nom' => 'required|string',
+            'titre' => 'required|string',
             'date_debut' => 'required|date',
             'date_fin' => 'required|date|after_or_equal:date_debut',
             'description' => 'nullable|string',
             'classification_id' => 'required|integer',
             'status_id' => 'required|integer',
-            'region_id' => 'required|integer',
-            'district_id' => 'required|integer',
-            'commune_id' => 'required|integer',
-            'fokontany_id' => 'required|integer',
+            'region_id' => 'nullable|integer',
+            'district_id' => 'nullable|integer',
+            'commune_id' => 'nullable|integer',
+            'fokontany_id' => 'nullable|integer',
             'entite_accreditee_id' => 'required|integer',
             'domaine_intervention_id' => 'required|integer',
         ]);

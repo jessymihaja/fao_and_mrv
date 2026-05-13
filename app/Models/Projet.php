@@ -64,5 +64,6 @@ class Projet extends Model
     public function fokontany(): BelongsTo { return $this->belongsTo(Fokontany::class); }
 
     public function financements(): HasMany { return $this->hasMany(Financement::class); }
+    public function documents(): HasMany { return $this->hasMany(Document::class); }
 
 }
