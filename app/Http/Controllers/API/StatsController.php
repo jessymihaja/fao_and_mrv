@@ -25,7 +25,7 @@ class StatsController extends Controller
             'projets_termines'   => Projet::where('is_published', true)->where('status_id', 2)->count(),
             'projets_planifies'  => Projet::where('is_published', true)->where('status_id', 3)->count(),
             'projets_suspendus'  => 0,
-            'budget_total'       => (float) Financement::sum('montant_mga'),
+            'budget_total'       => (float) Financement::sum(DB::raw('montant_mga * budget_approuve')),
             'total_financements' => Financement::count(),
         ]);
     }

@@ -79,6 +79,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/depenses',      [DepenseController::class, 'index']);
     Route::get('/depenses/{id}', [DepenseController::class, 'show']);
     
+    //public page
+    Route::get ('/public/stats',         [StatsController::class, 'public']);
+    Route::get ('/public/projects/map',  [ProjetController::class, 'mapData']);
+
     Route::get('/devises', [DeviseController::class, 'index']);
             // --- HERO ---
         Route::post('/heros', [HeroController::class, 'store']);

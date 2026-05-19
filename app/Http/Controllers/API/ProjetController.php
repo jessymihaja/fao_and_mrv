@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Projet;
 use Illuminate\Http\Request;
 use App\Services\ActivityLogService;
+use Illuminate\Http\JsonResponse;
 
 class ProjetController extends Controller
 {   
@@ -23,20 +24,17 @@ class ProjetController extends Controller
 
         return response()->json($projets);
     }
-    public function getPaginatedProjects(Request $request)
-{
-    $perPage = $request->per_page ?? 15;
-
-    $projets = Projet::with([
-        'status',
-        'classification',
-        'entiteAccreditee',
-        'domaineIntervention',
-    ])->paginate($perPage);
-
-    
-    return response()->json($projets);
-}
+   public function getPaginatedProjects(Request $request) { 
+    $perPage = $request->per_page ?? 15; $projets = Projet::with([ 'status', 
+    'classification', 
+    'entiteAccreditee', 
+    'domaineIntervention', 
+    ]) ->withSum( ['financements as budget_total' => function ($query) { $query->selectRaw('COALESCE(SUM(montant_mga * budget_approuve), 0)'); }], \DB::raw('montant_mga * budget_approuve') ) ->when( $request->filled('search'),
+     fn ($q) => $q->where(function ($s) use ($request) { 
+        $s->where('titre', 'ilike', "%{$request->search}%") 
+        ->orWhere('description', 'ilike', "%{$request->search}%"); }) ) 
+        ->when( $request->filled('statut'), fn ($q) => $q->whereHas('status', function ($query) use ($request) { $query->where('designation', $request->statut); }) )
+        ->paginate($perPage); return response()->json($projets); }
 
     public function show($id) {
     $projet = Projet::with([
@@ -241,4 +239,24 @@ class ProjetController extends Controller
                     ->get();
         return response()->json($projets);
     }   
+    public function mapData(): JsonResponse
+    {
+        $projects = Projet::with('region', 'domaineIntervention', 'status')
+            ->where('is_published', true)
+            ->whereNotNull('latitude')
+            ->whereNotNull('longitude')
+            ->select(['id_projet', 'titre', 'status_id', 'latitude', 'longitude', 'region_id', 'domaine_intervention_id'])
+            ->get()
+            ->map(fn (Projet $p) => [
+                'id'                 => $p->id_projet,
+                'titre'              => $p->titre,
+                'statut'             => $p->status?->designation,
+                'latitude'           => (float) $p->latitude,
+                'longitude'          => (float) $p->longitude,
+                'region'             => $p->region?->nom,
+                'secteur_climatique' => $p->domaineIntervention?->designation,
+            ]);
+
+        return response()->json($projects);
+    }
 }
