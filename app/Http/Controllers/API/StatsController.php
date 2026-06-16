@@ -156,18 +156,18 @@ class StatsController extends Controller
     // ── MISE À JOUR MANUELLE ──────────────────────────────────────────────────
     // DB::table() justifié ici : public_settings n'a pas de modèle Eloquent.
     public function updateManual(Request $request): JsonResponse
-    {
+    {   
         $validated = $request->validate([
-            'total_projets'      => 'nullable|integer|min:0',
-            'budget_total'       => 'nullable|numeric|min:0',
-            'total_financements' => 'nullable|integer|min:0',
+            'manual_total_projects'      => 'nullable|integer|min:0',
+            'manual_total_budget'       => 'nullable|numeric|min:0',
+            'manual_termines' => 'nullable|integer|min:0',
+            'use_auto_calculation' => 'nullable|boolean',
         ]);
-
         foreach ($validated as $key => $value) {
             DB::table('public_settings')
                 ->updateOrInsert(['key' => $key], ['value' => $value, 'type' => 'number']);
         }
-
+    
         return response()->json(['message' => 'Statistiques mises à jour.']);
     }
 }

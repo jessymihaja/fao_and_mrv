@@ -25,6 +25,7 @@ use App\Http\Controllers\API\DocumentController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\StatsController;
 use App\Http\Controllers\API\ActivityLogController;
+use App\Http\Controllers\API\PublicSettingsController;
 
 Route::get('/test', function () {
     return response()->json([
@@ -37,6 +38,17 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::get('/heros', [HeroController::class, 'index']);
 Route::get('/maps/{id}', [MapController::class, 'show']);
 Route::get('/maps', [MapController::class, 'index']);
+Route::get ('/public/stats',         [StatsController::class, 'public']);
+Route::get ('/public/projects/map',  [ProjetController::class, 'mapData']);
+Route::get('/sliders-public', [SliderController::class, 'active_sliders']);
+Route::get('/partners-public', [PartnerController::class, 'active_partners']);
+Route::get('/projets-paginated', [ProjetController::class, 'getPaginatedProjects']);
+Route::get('/chatbot-settings-public', [ChatbotSettingController::class, 'publicSettings']);
+Route::get('/faqs-public', [FaqsController::class, 'active_faqs']);
+Route::get('/public-settings', [PublicSettingsController::class, 'index']);
+
+
+
 Route::get('/documents/{id}/download', [DocumentController::class, 'download'])
         ->middleware('signed')->name('documents.download');
 
@@ -54,7 +66,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/chatbot-knowledges', [ChatbotKnowledgeController::class, 'index']);
 
     Route::get('/projets', [ProjetController::class, 'index']);
-    Route::get('/projets-paginated', [ProjetController::class, 'getPaginatedProjects']);
     Route::get('/projets/number', [ProjetController::class, 'projectsNumber']);
     Route::get('/projets/number-active', [ProjetController::class, 'projectsNumberActive']);
     Route::get('/projets/filter', [ProjetController::class, 'projectsfilter']);
@@ -80,8 +91,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/depenses/{id}', [DepenseController::class, 'show']);
     
     //public page
-    Route::get ('/public/stats',         [StatsController::class, 'public']);
-    Route::get ('/public/projects/map',  [ProjetController::class, 'mapData']);
+
 
     Route::get('/devises', [DeviseController::class, 'index']);
             // --- HERO ---
@@ -101,7 +111,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/chatbot-knowledges', [ChatbotKnowledgeController::class, 'knowledge']);
 
         // --- CHATBOT SETTINGS ---
-        Route::get('/chatbot-settings-public', [ChatbotSettingController::class, 'publicSettings']);
+        
         Route::put('/chatbot-settings', [ChatbotSettingController::class, 'updateSettings']);
         Route::get('/chatbot-settings-admin', [ChatbotSettingController::class, 'settings']);
         Route::post ('/chatbot-message', [ChatbotSettingController::class, 'message']);
@@ -111,14 +121,14 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/faqs/{id}', [FaqsController::class, 'update']);
         Route::delete('/faqs/{id}', [FaqsController::class, 'destroy']);
         Route::get('/faqs', [FaqsController::class, 'index']);
-        Route::get('/faqs-public', [FaqsController::class, 'active_faqs']);
+        
 
         // --- PARTNERS ---
         Route::post('/partners', [PartnerController::class, 'store']);
         Route::put('/partners/{id}', [PartnerController::class, 'update']);
         Route::delete('/partners/{id}', [PartnerController::class, 'destroy']);
         Route::get('/partners', [PartnerController::class, 'index']);
-        Route::get('/partners-public', [PartnerController::class, 'active_partners']);
+        
 
         // --- CONTACTS ---
         Route::post('/contacts', [ContactController::class, 'store']);
@@ -131,7 +141,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/sliders/{id}', [SliderController::class, 'update']);
         Route::delete('/sliders/{id}', [SliderController::class, 'destroy']);
         Route::get('/sliders', [SliderController::class, 'index']);
-        Route::get('/sliders-public', [SliderController::class, 'active_sliders']);
 
         // --- Statistiques ---
         Route::get('/stats/global',             [StatsController::class, 'global']);
@@ -220,6 +229,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put   ('/users/{id}/status', [AuthController::class, 'toggle']);
         Route::put   ('/users/{id}/toggle',[AuthController::class, 'toggle']);
         Route::put   ('/users/{id}',       [AuthController::class, 'update']);
+
+        // --- settings ---
+         Route::get ('/settings',       [PublicSettingsController::class, 'adminIndex']);
+        Route::put ('/settings/{key}', [PublicSettingsController::class, 'update']);
+        Route::post('/settings/stats ', [StatsController::class, 'updateManual']);
 
     });
 

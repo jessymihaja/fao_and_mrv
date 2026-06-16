@@ -14,11 +14,11 @@ return new class extends Migration
         Schema::create('projets', function (Blueprint $table) {
             $table->id('id_projet');
             $table->string('titre');
-            $table->unsignedBigInteger('status_id');
-            $table->unsignedBigInteger('classification_id');    
-            $table->unsignedBigInteger('entite_accreditee_id');
+            $table->unsignedBigInteger('status_id')->nullable();
+            $table->unsignedBigInteger('classification_id')->nullable();    
+            $table->unsignedBigInteger('entite_accreditee_id')->nullable();
             $table->text('description')->nullable();
-            $table->unsignedBigInteger('domaine_intervention_id');
+            $table->unsignedBigInteger('domaine_intervention_id')->nullable();
             $table->date('date_debut');
             $table->date('date_fin')->nullable();
             $table->decimal('latitude',10,8);
