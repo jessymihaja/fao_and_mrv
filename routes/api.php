@@ -234,7 +234,6 @@ Route::middleware('auth:sanctum')->group(function () {
          Route::get ('/settings',       [PublicSettingsController::class, 'adminIndex']);
         Route::put ('/settings/{key}', [PublicSettingsController::class, 'update']);
         Route::post('/settings/stats ', [StatsController::class, 'updateManual']);
-
     });
 
 });
