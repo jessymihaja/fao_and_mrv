@@ -26,6 +26,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\StatsController;
 use App\Http\Controllers\API\ActivityLogController;
 use App\Http\Controllers\API\PublicSettingsController;
+use App\Http\Controllers\API\Resultat_mrvController;
+use App\Http\Controllers\API\Indicateur_mrvController;
 
 Route::get('/test', function () {
     return response()->json([
@@ -151,6 +153,13 @@ Route::middleware('auth:sanctum')->group(function () {
         // --- ACTIVITY LOGS ---
         Route::get('/activity-logs', [ActivityLogController::class, 'index']);
 
+        // ---  MRV ---
+        Route::get('/resultat-mrvs', [Resultat_mrvController::class, 'index']);
+        Route::get('/resultat-marvs/{id}', [Resultat_mrvController::class, 'show']);
+        Route::get('/indicateur-mrvs', [Indicateur_mrvController::class, 'index']);
+        Route::get('/indicateur-mrvs/{id}', [Indicateur_mrvController::class, 'show']);
+
+    
         
     // admin + gestionnaire
     Route::middleware('role:admin,gestionnaire')->group(function () {
@@ -234,6 +243,18 @@ Route::middleware('auth:sanctum')->group(function () {
          Route::get ('/settings',       [PublicSettingsController::class, 'adminIndex']);
         Route::put ('/settings/{key}', [PublicSettingsController::class, 'update']);
         Route::post('/settings/stats ', [StatsController::class, 'updateManual']);
+
+        // --- Indicateur MRV ---
+        
+        Route::post('/indicateur-mrvs', [Indicateur_mrvController::class, 'store']);
+        Route::put('/indicateur-mrvs/{id}', [Indicateur_mrvController::class, 'update']);
+        Route::delete('/indicateur-mrvs/{id}', [Indicateur_mrvController::class, 'destroy']);
+
+        // --- Resultat MRV ---
+        
+        Route::post('/resultat-mrvs', [Resultat_mrvController::class, 'store']);
+        Route::put('/resultat-mrvs/{id}', [Resultat_mrvController::class, 'update']);
+        Route::delete('/resultat-mrvs/{id}', [Resultat_mrvController::class, 'destroy']);
     });
 
 });
