@@ -23,6 +23,7 @@ class Projet extends Model
     public $timestamps = false;
 
     protected $fillable = [
+        'code_projet',
         'titre',
         'status_id',
         'classification_id',

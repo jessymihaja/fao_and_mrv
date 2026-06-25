@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('projets', function (Blueprint $table) {
             $table->id('id_projet');
+            $table->string('code_projet')->nullable();
             $table->string('titre');
             $table->unsignedBigInteger('status_id')->nullable();
             $table->unsignedBigInteger('classification_id')->nullable();    

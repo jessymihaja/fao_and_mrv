@@ -78,6 +78,7 @@ class ProjetController extends Controller
     private function sanitize(Request $request): void
     {
         $nullableFields = [
+            'code_projet',
             'description',
             'domaine_intervention_id',
             'classification_id',
@@ -122,6 +123,7 @@ class ProjetController extends Controller
         $statutValues = implode(',', ['Concept Note', 'Funding Proposal', 'En cours', 'Clôturé']);
 
         $rules = [
+            'code_projet'                => 'nullable|string|max:255',
             'titre'                    => 'string|max:255',
             'status_id'                => 'required|integer|exists:statuses,id_status',
             'classification_id'        => 'required|integer|exists:classifications,id_classification',
