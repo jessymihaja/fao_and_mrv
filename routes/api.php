@@ -158,6 +158,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/resultat-marvs/{id}', [Resultat_mrvController::class, 'show']);
         Route::get('/indicateur-mrvs', [Indicateur_mrvController::class, 'index']);
         Route::get('/indicateur-mrvs/{id}', [Indicateur_mrvController::class, 'show']);
+        Route::get('/indicateur-kpis', [Resultat_mrvController::class, 'getKpis']);
 
     
         
