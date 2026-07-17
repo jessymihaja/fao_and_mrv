@@ -34,9 +34,13 @@ class Financement extends Model
         ];
     }
 
-    public function projet(): BelongsTo
+public function projet(): BelongsTo
     {
-        return $this->belongsTo(Projet::class);
+        return $this->belongsTo(
+        Projet::class,
+        'projet_id',
+        'id_projet'
+    );
     }
     public function documents(): HasMany
     {
