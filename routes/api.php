@@ -28,6 +28,8 @@ use App\Http\Controllers\API\ActivityLogController;
 use App\Http\Controllers\API\PublicSettingsController;
 use App\Http\Controllers\API\Resultat_mrvController;
 use App\Http\Controllers\API\Indicateur_mrvController;
+use App\Http\Controllers\API\ComposanteController;
+use App\Http\Controllers\API\ActiviteController;
 
 Route::get('/test', function () {
     return response()->json([
@@ -160,6 +162,14 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/indicateur-mrvs/{id}', [Indicateur_mrvController::class, 'show']);
         Route::get('/indicateur-kpis', [Resultat_mrvController::class, 'getKpis']);
 
+        // --- COMPOSANTES ---
+        Route::get('/composantes', [ComposanteController::class, 'index']);
+        Route::get('/composantes/{id}', [ComposanteController::class, 'show']);
+
+        // --- ACTIVITES ---
+        Route::get('/activites', [ActiviteController::class, 'index']);
+        Route::get('/activites/{id}', [ActiviteController::class, 'show']);
+
     
         
     // admin + gestionnaire
@@ -256,6 +266,16 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/resultat-mrvs', [Resultat_mrvController::class, 'store']);
         Route::put('/resultat-mrvs/{id}', [Resultat_mrvController::class, 'update']);
         Route::delete('/resultat-mrvs/{id}', [Resultat_mrvController::class, 'destroy']);
+
+        // --- Composantes ---
+        Route::post('/composantes', [ComposanteController::class, 'store']);
+        Route::put('/composantes/{id}', [ComposanteController::class, 'update']);
+        Route::delete('/composantes/{id}', [ComposanteController::class, 'destroy']);
+
+        // --- Activites ---
+        Route::post('/activites', [ActiviteController::class, 'store']);
+        Route::put('/activites/{id}', [ActiviteController::class, 'update']);
+        Route::delete('/activites/{id}', [ActiviteController::class, 'destroy']);
     });
 
 });

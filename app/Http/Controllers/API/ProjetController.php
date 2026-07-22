@@ -19,16 +19,16 @@ class ProjetController extends Controller
     {
         $projets = Projet::with([
             'status',
-            'classification'])
+            'classifications'])
                     ->get();
 
         return response()->json($projets);
     }
    public function getPaginatedProjects(Request $request) { 
     $perPage = $request->per_page ?? 15; $projets = Projet::with([ 'status', 
-    'classification', 
-    'entiteAccreditee', 
-    'domaineIntervention', 
+    'classifications', 
+    'entiteAccreditees', 
+    'domainesIntervention', 
     ]) ->withSum( ['financements as budget_total' => function ($query) { $query->selectRaw('COALESCE(SUM(montant_mga * budget_approuve), 0)'); }], \DB::raw('montant_mga * budget_approuve') ) ->when( $request->filled('search'),
      fn ($q) => $q->where(function ($s) use ($request) { 
         $s->where('titre', 'ilike', "%{$request->search}%") 
@@ -39,9 +39,9 @@ class ProjetController extends Controller
     public function show($id) {
     $projet = Projet::with([
         'status', 
-        'classification', 
-        'entiteAccreditee', 
-        'domaineIntervention', 
+        'classifications', 
+        'entiteAccreditees', 
+        'domainesIntervention', 
     ])->findOrFail($id);
 
     return response()->json($projet);
@@ -80,10 +80,7 @@ class ProjetController extends Controller
         $nullableFields = [
             'code_projet',
             'description',
-            'domaine_intervention_id',
-            'classification_id',
             'status_id',
-            'entite_accreditee_id',
             'date_debut',
             'date_fin',
             'latitude',
@@ -126,9 +123,15 @@ class ProjetController extends Controller
             'code_projet'                => 'nullable|string|max:255',
             'titre'                    => 'string|max:255',
             'status_id'                => 'required|integer|exists:statuses,id_status',
-            'classification_id'        => 'required|integer|exists:classifications,id_classification',
-            'entite_accreditee_id'     => 'required|integer|exists:entite_accreditees,id_entite_accreditee',
-            'domaine_intervention_id'  => 'required|integer|exists:domaine_interventions,id_domaine_intervention',
+            'classification_ids' => 'required|array|min:0',
+            'classification_ids.*' => 'exists:classifications,id_classification',
+
+            'entite_accreditee_ids' => 'required|array|min:0',
+            'entite_accreditee_ids.*' => 'exists:entite_accreditees,id_entite_accreditee',
+
+            'domaine_intervention_ids' => 'required|array|min:0',
+            'domaine_intervention_ids.*' => 'exists:domaine_interventions,id_domaine_intervention',
+
             'description'              => 'nullable|string',
             'date_debut'               => 'nullable|date',
             'date_fin'                 => 'nullable|date',
@@ -167,7 +170,21 @@ class ProjetController extends Controller
         $validated = $request->validate($this->validationRules(false));
         $validated['is_published'] = $validated['is_published'] ?? false;
 
+        $classifications = $validated['classification_ids'];
+        $entites = $validated['entite_accreditee_ids'];
+        $domaines = $validated['domaine_intervention_ids'];
+
+        unset(
+            $validated['classification_ids'],
+            $validated['entite_accreditee_ids'],
+            $validated['domaine_intervention_ids']
+        );
+
         $project = Projet::create($validated);
+
+        $project->classifications()->sync($classifications);
+        $project->entiteAccreditees()->sync($entites);
+        $project->domainesIntervention()->sync($domaines);
         $this->logService->log(
             'create', 'projet',
             "Projet créé : {$project->titre}",
@@ -189,17 +206,18 @@ class ProjetController extends Controller
             'date_debut' => 'required|date',
             'date_fin' => 'required|date|after_or_equal:date_debut',
             'description' => 'nullable|string',
-            'classification_id' => 'required|integer',
             'status_id' => 'required|integer',
             'region_id' => 'nullable|integer',
             'district_id' => 'nullable|integer',
             'commune_id' => 'nullable|integer',
             'fokontany_id' => 'nullable|integer',
-            'entite_accreditee_id' => 'required|integer',
-            'domaine_intervention_id' => 'required|integer',
+
         ]);
 
         $projet->update($request->all());
+        $projet->classifications()->sync($request->classification_ids);
+        $projet->entiteAccreditees()->sync($request->entite_accreditee_ids);
+        $projet->domainesIntervention()->sync($request->domaine_intervention_ids);
 
         return response()->json([
             'message' => 'Modifié',

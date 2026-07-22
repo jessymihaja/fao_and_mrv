@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use App\Models\Projet;
 
 class DomaineIntervention extends Model
 {
@@ -16,4 +18,15 @@ class DomaineIntervention extends Model
         'designation',
         'description',
     ];
+    public function projets(): BelongsToMany
+{
+    return $this->belongsToMany(
+        Projet::class,
+        'domaine_intervention_projet',
+        'domaine_intervention_id',
+        'projet_id',
+        'id_domaine_intervention',
+        'id_projet'
+    );
+}
 }

@@ -11,6 +11,7 @@ use App\Models\EntiteAccreditee;
 use App\Models\DomaineIntervention;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 
 
@@ -26,10 +27,7 @@ class Projet extends Model
         'code_projet',
         'titre',
         'status_id',
-        'classification_id',
-        'entite_accreditee_id',
         'description',
-        'domaine_intervention_id',
         'date_debut',
         'date_fin',
         'latitude',
@@ -49,17 +47,41 @@ class Projet extends Model
         return $this->belongsTo(Status::class, 'status_id', 'id_status');
     }
 
-    public function classification() : BelongsTo {
-        return $this->belongsTo(Classification::class, 'classification_id', 'id_classification');
-    }
+    public function classifications(): BelongsToMany
+{
+    return $this->belongsToMany(
+        Classification::class,
+        'classification_projet',
+        'projet_id',
+        'classification_id',
+        'id_projet',
+        'id_classification'
+    );
+}
 
-    public function entiteAccreditee() : BelongsTo {
-        return $this->belongsTo(EntiteAccreditee::class, 'entite_accreditee_id', 'id_entite_accreditee');
-    }
+public function entiteAccreditees(): BelongsToMany
+{
+    return $this->belongsToMany(
+        EntiteAccreditee::class,
+        'entite_accreditee_projet',
+        'projet_id',
+        'entite_accreditee_id',
+        'id_projet',
+        'id_entite_accreditee'
+    );
+}
 
-    public function domaineIntervention(): BelongsTo {
-        return $this->belongsTo(DomaineIntervention::class, 'domaine_intervention_id', 'id_domaine_intervention');
-    }
+public function domainesIntervention(): BelongsToMany
+{
+    return $this->belongsToMany(
+        DomaineIntervention::class,
+        'domaine_intervention_projet',
+        'projet_id',
+        'domaine_intervention_id',
+        'id_projet',
+        'id_domaine_intervention'
+    );
+}
     public function province():  BelongsTo { return $this->belongsTo(Province::class); }
     public function region():    BelongsTo { return $this->belongsTo(Region::class); }
     public function district():  BelongsTo { return $this->belongsTo(District::class); }
