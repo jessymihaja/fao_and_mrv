@@ -157,18 +157,25 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // ---  MRV ---
         Route::get('/resultat-mrvs', [Resultat_mrvController::class, 'index']);
-        Route::get('/resultat-marvs/{id}', [Resultat_mrvController::class, 'show']);
+        Route::get('/resultat-mrvs/composante/{id}', [Resultat_mrvController::class, 'getByComposite']);
+        Route::get('/resultat-mrvs/activite/{id}', [Resultat_mrvController::class, 'getByActivite']);
+        Route::get('/resultat-mrvs/projet/{id}', [Resultat_mrvController::class, 'getByProjet']);
+        Route::get('/resultat-mrvs/{id}', [Resultat_mrvController::class, 'show']);
         Route::get('/indicateur-mrvs', [Indicateur_mrvController::class, 'index']);
         Route::get('/indicateur-mrvs/{id}', [Indicateur_mrvController::class, 'show']);
         Route::get('/indicateur-kpis', [Resultat_mrvController::class, 'getKpis']);
 
+
         // --- COMPOSANTES ---
         Route::get('/composantes', [ComposanteController::class, 'index']);
         Route::get('/composantes/{id}', [ComposanteController::class, 'show']);
+        Route::get('/composantes/projet/{id}', [ComposanteController::class, 'getByProjet']);
 
         // --- ACTIVITES ---
         Route::get('/activites', [ActiviteController::class, 'index']);
         Route::get('/activites/{id}', [ActiviteController::class, 'show']);
+        Route::get('/activites/projet/{id}', [ActiviteController::class, 'getByProjet']);
+        Route::get('/activites/composante/{id}', [ActiviteController::class, 'getByComposante']);
 
     
         
@@ -268,7 +275,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/resultat-mrvs/{id}', [Resultat_mrvController::class, 'destroy']);
 
         // --- Composantes ---
-        Route::post('/composantes', [ComposanteController::class, 'store']);
+        Route::post('/composantes/{projet_id}', [ComposanteController::class, 'store']);
         Route::put('/composantes/{id}', [ComposanteController::class, 'update']);
         Route::delete('/composantes/{id}', [ComposanteController::class, 'destroy']);
 
@@ -276,6 +283,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/activites', [ActiviteController::class, 'store']);
         Route::put('/activites/{id}', [ActiviteController::class, 'update']);
         Route::delete('/activites/{id}', [ActiviteController::class, 'destroy']);
+        Route::post('/activites/composante/{composante}', [ActiviteController::class, 'store']);
+        Route::post('/activites/projet/{project}', [ActiviteController::class, 'store']);
     });
 
 });

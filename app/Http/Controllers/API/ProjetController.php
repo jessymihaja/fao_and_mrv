@@ -261,11 +261,11 @@ class ProjetController extends Controller
     }   
     public function mapData(): JsonResponse
     {
-        $projects = Projet::with('region', 'domaineIntervention', 'status')
+        $projects = Projet::with('region', 'status')
             ->where('is_published', true)
             ->whereNotNull('latitude')
             ->whereNotNull('longitude')
-            ->select(['id_projet', 'titre', 'status_id', 'latitude', 'longitude', 'region_id', 'domaine_intervention_id'])
+            ->select(['id_projet', 'titre', 'status_id', 'latitude', 'longitude', 'region_id'])
             ->get()
             ->map(fn (Projet $p) => [
                 'id'                 => $p->id_projet,
@@ -274,7 +274,6 @@ class ProjetController extends Controller
                 'latitude'           => (float) $p->latitude,
                 'longitude'          => (float) $p->longitude,
                 'region'             => $p->region?->nom,
-                'secteur_climatique' => $p->domaineIntervention?->designation,
             ]);
 
         return response()->json($projects);
