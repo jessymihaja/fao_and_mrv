@@ -212,6 +212,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/projets', [ProjetController::class, 'store']);
         Route::put('/projets/{id}', [ProjetController::class, 'update']);
         Route::delete('/projets/{id}', [ProjetController::class, 'destroy']);
+        Route::put('/projets/{id}/step', [ProjetController::class, 'advanceStep']);
+        Route::put('/projets/{id}/geo', [ProjetController::class, 'updateGeo']);
 
         // --- DEVISES ---
         Route::post('/devises', [DeviseController::class, 'store']);

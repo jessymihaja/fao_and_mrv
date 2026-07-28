@@ -278,4 +278,44 @@ class ProjetController extends Controller
 
         return response()->json($projects);
     }
+    public function advanceStep(Request $request, $id): JsonResponse
+    {
+        $request->validate([
+            'step' => 'required|integer'
+        ]);
+
+        $projet = Projet::findOrFail($id);
+
+        if ($request->step > $projet->wizard_step) {
+            $projet->update([
+                'wizard_step' => $request->step
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'Étape mise à jour',
+            'data' => $projet
+        ]);
+    }
+    public function updateGeo(Request $request, $id): JsonResponse
+{
+    $data = $request->validate([
+        'latitude' => 'nullable|numeric',
+        'longitude' => 'nullable|numeric',
+        'region_id' => 'nullable',
+        'district_id' => 'nullable',
+        'commune_id' => 'nullable',
+        'fokontany_id' => 'nullable',
+        'zone_description' => 'nullable|string',
+    ]);
+
+    $projet = Projet::findOrFail($id);
+
+    $projet->update($data);
+
+    return response()->json([
+        'message' => 'Zone mise à jour',
+        'data' => $projet
+    ]);
+}
 }

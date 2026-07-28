@@ -38,7 +38,8 @@ class Projet extends Model
         'region_id',
         'district_id',
         'commune_id',
-        'fokontany_id'
+        'fokontany_id',
+        'wizard_step',
         
 
     ];
