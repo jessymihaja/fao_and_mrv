@@ -19,7 +19,7 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['http://localhost:5173',],
+    'allowed_origins' => ['http://localhost:5173','http://fao.192.168.88.252.sslip.io'],
 
     'allowed_origins_patterns' => [],
 
