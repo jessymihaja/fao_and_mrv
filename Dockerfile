@@ -4,7 +4,7 @@ FROM node:20-alpine AS assets
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci
+RUN npm install --omit=optional
 
 COPY . .
 RUN npm run build
