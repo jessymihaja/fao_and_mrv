@@ -6,4 +6,6 @@
     root * /app/public
 
     php_server
+    encode gzip zstd
+    
 }

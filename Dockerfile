@@ -37,6 +37,8 @@ RUN mkdir -p storage/framework/{cache,sessions,views} \
  && chown -R www-data:www-data storage bootstrap/cache \
  && chmod -R 775 storage bootstrap/cache
 
+COPY Caddyfile /etc/caddy/Caddyfile
+
 EXPOSE 80
 
-CMD ["frankenphp", "run", "--config", "/etc/caddy/Caddyfile"]
+#CMD ["frankenphp", "run", "--config", "/etc/caddy/Caddyfile"]
