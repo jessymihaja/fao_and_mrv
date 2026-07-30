@@ -41,4 +41,4 @@ COPY Caddyfile /etc/caddy/Caddyfile
 
 EXPOSE 80
 
-#CMD ["frankenphp", "run", "--config", "/etc/caddy/Caddyfile"]
+CMD ["frankenphp", "run", "--config", "/etc/caddy/Caddyfile"]
