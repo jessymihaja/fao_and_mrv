@@ -89,7 +89,7 @@ public function domainesIntervention(): BelongsToMany
     public function commune():   BelongsTo { return $this->belongsTo(Commune::class); }
     public function fokontany(): BelongsTo { return $this->belongsTo(Fokontany::class); }
 
-    public function financements(): HasMany { return $this->hasMany(Financement::class,'projet_id', 'id_projet'); }
+    public function financements(): HasMany { return $this->hasMany(Financement::class,'project_id', 'id_projet'); }
     public function documents(): HasMany { return $this->hasMany(Document::class); }
 
 }

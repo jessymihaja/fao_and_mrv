@@ -30,6 +30,16 @@ use App\Http\Controllers\API\Resultat_mrvController;
 use App\Http\Controllers\API\Indicateur_mrvController;
 use App\Http\Controllers\API\ComposanteController;
 use App\Http\Controllers\API\ActiviteController;
+use App\Http\Controllers\API\ContributionCategorieController;
+use App\Http\Controllers\API\OrganismeContributeurController;
+use App\Http\Controllers\Api\ProjectIdeaController;
+use App\Http\Controllers\Api\ProjectIdeaFinancementController;
+use App\Http\Controllers\Api\ProjectIdeaDocumentController;
+use App\Http\Controllers\Api\ProjectIdeaDashboardController;
+use App\Http\Controllers\Api\SecteurController;
+use App\Http\Controllers\API\BudgetStageController;
+use App\Http\Controllers\API\BudgetCycleController;
+
 
 Route::get('/test', function () {
     return response()->json([
@@ -94,6 +104,59 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/depenses',      [DepenseController::class, 'index']);
     Route::get('/depenses/{id}', [DepenseController::class, 'show']);
     
+    // --- SECTEURS ---
+    Route::get('/secteurs', [SecteurController::class, 'index']);
+
+    // --- PROJECT IDEA ---
+    // --- DASHBOARD ---
+    Route::get('/project-ideas/dashboard', [ProjectIdeaDashboardController::class, 'index']);
+    Route::get('/project-ideas/export-data', [ProjectIdeaController::class, 'exportData']);
+    Route::apiResource('/project-ideas', ProjectIdeaController::class);
+    Route::get('/project-ideas/{ideaId}/financements', [ProjectIdeaFinancementController::class, 'index']);
+    Route::get('/project-ideas/{ideaId}/documents', [ProjectIdeaDocumentController::class, 'index']);
+    Route::get('/project-idea-documents/{id}/download', [ProjectIdeaDocumentController::class, 'download']);
+
+    // --- CONTRIBUTION  ---
+    Route::get('/contribution-categories', [ContributionCategorieController::class, 'index']);
+    Route::get('/organismes-contributeurs', [OrganismeContributeurController::class, 'index']);
+
+    // --- SECTEURS ---
+    Route::get('/secteurs', [SecteurController::class, 'index']);
+
+    // ─── 1. Pledges (budgetPledgeApi) ───
+    Route::get('/financements/{financementId}/pledges', [BudgetStageController::class, 'listPledges']);
+    Route::get('/pledges/{id}/download', [BudgetStageController::class, 'downloadPledge']);
+
+    // ─── 2. Mobilisations (budgetMobilisationApi) ───
+    Route::get('/financements/{financementId}/mobilisations', [BudgetStageController::class, 'listMobilisations']);
+    Route::get('/mobilisations/{id}/download', [BudgetStageController::class, 'downloadMobilisation']);
+
+    // ─── 3. Approbations (budgetApprobationApi) ───
+    Route::get('/financements/{financementId}/approbations', [BudgetStageController::class, 'listApprobations']);
+    Route::get('/approbations/{id}/download', [BudgetStageController::class, 'downloadApprobation']);
+
+    // ─── 4. Engagements (suiviApi) ───
+    Route::get('/financements/{financementId}/engagements', [BudgetStageController::class, 'listEngagements']);
+    Route::get('/engagements/{id}/download', [BudgetStageController::class, 'downloadEngagement']);
+
+    // ─── 5. Plans de décaissement / Programmations (suiviApi) ───
+    Route::get('/financements/{financementId}/decaissement-plans', [BudgetStageController::class, 'listPlans']);
+    Route::get('/decaissement-plans/{id}/download', [BudgetStageController::class, 'downloadPlan']);
+
+    // ─── 6. Décaissements réels (suiviApi) ───
+    Route::get('/financements/{financementId}/decaissements', [BudgetStageController::class, 'listDecaissements']);
+    Route::get('/decaissements/{id}/download', [BudgetStageController::class, 'downloadDecaissement']);
+
+    // ─── 7. Dépenses & Audits (depenseApi) ───
+    Route::get('/depenses', [BudgetStageController::class, 'listDepenses']);
+    Route::get('/depenses/{id}', [BudgetStageController::class, 'showDepense']);
+    Route::get('/depenses/{id}/rapport-audit/download', [BudgetStageController::class, 'downloadDepenseRapportAudit']);
+    Route::get('/depenses/{id}/download', [BudgetStageController::class, 'downloadDepenseJustification']);
+
+    // ─── 8. Vue consolidée / Tableaux de bord (budgetCycleApi) ───
+    Route::get('/projects/{projectId}/budget-cycle', [BudgetCycleController::class, 'forProject']);
+    Route::get('/financements/{financementId}/budget-cycle', [BudgetCycleController::class, 'forFinancement']);
+
     //public page
 
 
@@ -287,6 +350,68 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/activites/{id}', [ActiviteController::class, 'destroy']);
         Route::post('/activites/composante/{composante}', [ActiviteController::class, 'store']);
         Route::post('/activites/projet/{project}', [ActiviteController::class, 'store']);
+
+        // --- Secteurs ---
+        Route::post('/secteurs', [SecteurController::class, 'store']);
+        Route::put('/secteurs/{id}', [SecteurController::class, 'update']);
+        Route::delete('/secteurs/{id}', [SecteurController::class, 'destroy']);
+
+        // --- Project Idea ---
+    Route::put('/project-ideas/{id}/status', [ProjectIdeaController::class, 'changeStatus']);
+    Route::post('/project-ideas/{id}/convert', [ProjectIdeaController::class, 'convert']);
+
+    Route::post('/project-ideas/{ideaId}/financements', [ProjectIdeaFinancementController::class, 'store']);
+    Route::put('/project-idea-financements/{id}', [ProjectIdeaFinancementController::class, 'update']);
+    Route::delete('/project-idea-financements/{id}', [ProjectIdeaFinancementController::class, 'destroy']);
+    Route::post('/project-ideas/{ideaId}/documents', [ProjectIdeaDocumentController::class, 'store']);
+    Route::delete('/project-idea-documents/{id}', [ProjectIdeaDocumentController::class, 'destroy']);
+    
+    // --- CONTRIBUTION  ---
+    Route::post('/contribution-categories', [ContributionCategorieController::class, 'store']);
+    Route::post('/organismes-contributeurs', [OrganismeContributeurController::class, 'store']);
+
+    // --- SECTEURS ---
+    Route::post('/secteurs', [SecteurController::class, 'store']);
+
+    // ─── 1. Pledges (budgetPledgeApi) ───
+    Route::post('/financements/{financementId}/pledges', [BudgetStageController::class, 'storePledge']);
+    Route::post('/pledges/{id}', [BudgetStageController::class, 'updatePledge']);
+    Route::delete('/pledges/{id}', [BudgetStageController::class, 'destroyPledge']);
+
+    // ─── 2. Mobilisations (budgetMobilisationApi) ───
+    Route::post('/financements/{financementId}/mobilisations', [BudgetStageController::class, 'storeMobilisation']);
+    Route::post('/mobilisations/{id}', [BudgetStageController::class, 'updateMobilisation']);
+    Route::delete('/mobilisations/{id}', [BudgetStageController::class, 'destroyMobilisation']);
+
+    // ─── 3. Approbations (budgetApprobationApi) ───
+    Route::post('/financements/{financementId}/approbations', [BudgetStageController::class, 'storeApprobation']);
+    Route::post('/approbations/{id}', [BudgetStageController::class, 'updateApprobation']);
+    Route::delete('/approbations/{id}', [BudgetStageController::class, 'destroyApprobation']);
+
+    // ─── 4. Engagements (suiviApi) ───
+    Route::post('/financements/{financementId}/engagements', [BudgetStageController::class, 'storeEngagement']);
+    Route::put('/engagements/{id}', [BudgetStageController::class, 'updateEngagement']);
+    Route::post('/engagements/{id}', [BudgetStageController::class, 'updateEngagement']); // Soumission FormData
+    Route::delete('/engagements/{id}', [BudgetStageController::class, 'destroyEngagement']);
+
+    // ─── 5. Plans de décaissement / Programmations (suiviApi) ───
+    Route::post('/financements/{financementId}/decaissement-plans', [BudgetStageController::class, 'storePlan']);
+    Route::put('/decaissement-plans/{id}', [BudgetStageController::class, 'updatePlan']);
+    Route::post('/decaissement-plans/{id}', [BudgetStageController::class, 'updatePlan']); // Soumission FormData
+    Route::delete('/decaissement-plans/{id}', [BudgetStageController::class, 'destroyPlan']);
+
+    // ─── 6. Décaissements réels (suiviApi) ───
+    Route::post('/financements/{financementId}/decaissements', [BudgetStageController::class, 'storeDecaissement']);
+    Route::put('/decaissements/{id}', [BudgetStageController::class, 'updateDecaissement']);
+    Route::post('/decaissements/{id}', [BudgetStageController::class, 'updateDecaissement']); // Soumission FormData
+    Route::delete('/decaissements/{id}', [BudgetStageController::class, 'destroyDecaissement']);
+
+    // ─── 7. Dépenses & Audits (depenseApi) ───
+    Route::post('/depenses', [BudgetStageController::class, 'storeDepense']);
+    Route::put('/depenses/{id}', [BudgetStageController::class, 'updateDepense']);
+    Route::delete('/depenses/{id}', [BudgetStageController::class, 'destroyDepense']);
+    Route::post('/depenses/{id}/audit', [BudgetStageController::class, 'auditDepense']);
+
     });
 
 });
