@@ -25,7 +25,7 @@ class StatsController extends Controller
             'projets_termines'   => Projet::where('is_published', true)->where('status_id', 2)->count(),
             'projets_planifies'  => Projet::where('is_published', true)->where('status_id', 3)->count(),
             'projets_suspendus'  => 0,
-            'budget_total'       => (float) Financement::sum(DB::raw('montant_mga * budget_approuve')),
+            'budget_total'       => (float) Financement::sum(DB::raw('budget_approuve')),
             'total_financements' => Financement::count(),
         ]);
     }
@@ -39,7 +39,7 @@ class StatsController extends Controller
             'projets_termines'    => Projet::where('status_id', 2)->count(),
             'projets_planifies'   => Projet::where('status_id', 3)->count(),
             'projets_suspendus'   => Projet::where('status_id', 4)->count(),
-            'budget_total' => (float) Financement::sum(DB::raw('montant_mga * budget_approuve')),
+            'budget_total' => (float) Financement::sum(DB::raw('budget_approuve')),
             'budget_usd'          => (float) Financement::where('devise', 'USD')->sum('budget_approuve'),
             'budget_eur'          => (float) Financement::where('devise', 'EUR')->sum('budget_approuve'),
             'budget_ar'           => (float) Financement::where('devise', 'AR')->sum('budget_approuve'),
@@ -84,7 +84,7 @@ class StatsController extends Controller
     {
         $rows = Financement::selectRaw("
                 EXTRACT(YEAR FROM date_approbation)::int                            AS annee,
-                SUM(montant_mga)                                                    AS mga,
+                SUM(CASE WHEN devise = 'AR' THEN budget_approuve ELSE 0 END)       AS mga,
                 SUM(CASE WHEN devise = 'USD' THEN budget_approuve ELSE 0 END)       AS usd,
                 SUM(CASE WHEN devise = 'EUR' THEN budget_approuve ELSE 0 END)       AS eur
             ")

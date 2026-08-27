@@ -9,24 +9,48 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Document extends Model
 {
-     use HasFactory;
+    use HasFactory;
+
+    protected $table = 'documents';
 
     protected $fillable = [
-        'titre', 'type', 'fichier', 'fichier_original', 'taille',
-        'mime_type', 'project_id', 'financement_id', 'description', 'uploaded_by',
+        'titre',
+        'type',
+        'fichier',
+        'fichier_original',
+        'taille',
+        'mime_type',
+        'project_id',
+        'composante_id',
+        'financement_id',
+        'description',
+        'uploaded_by',
     ];
 
-    public function projet(): BelongsTo
+    protected $casts = [
+        'taille' => 'integer',
+        'project_id' => 'integer',
+        'composante_id' => 'integer',
+        'financement_id' => 'integer',
+        'uploaded_by' => 'integer',
+    ];
+
+    public function project()
     {
-        return $this->belongsTo(Projet::class , 'project_id', 'id_projet');
+        return $this->belongsTo(Projet::class, 'project_id', 'id_projet');
     }
 
-    public function financement(): BelongsTo
+    public function composante()
+    {
+        return $this->belongsTo(Composante::class);
+    }
+
+    public function financement()
     {
         return $this->belongsTo(Financement::class);
     }
 
-    public function uploader(): BelongsTo
+    public function uploader()
     {
         return $this->belongsTo(User::class, 'uploaded_by');
     }

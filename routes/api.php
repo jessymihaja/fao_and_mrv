@@ -39,6 +39,7 @@ use App\Http\Controllers\Api\ProjectIdeaDashboardController;
 use App\Http\Controllers\Api\SecteurController;
 use App\Http\Controllers\API\BudgetStageController;
 use App\Http\Controllers\API\BudgetCycleController;
+use App\Http\Controllers\API\RapportNationalController;
 
 
 Route::get('/test', function () {
@@ -60,11 +61,18 @@ Route::get('/projets-paginated', [ProjetController::class, 'getPaginatedProjects
 Route::get('/chatbot-settings-public', [ChatbotSettingController::class, 'publicSettings']);
 Route::get('/faqs-public', [FaqsController::class, 'active_faqs']);
 Route::get('/public-settings', [PublicSettingsController::class, 'index']);
-
+// ─── LECTURE ET EXPORTS (GET) ─────────────────────────────────
+        Route::get('/rapports-nationaux', [RapportNationalController::class, 'index']);
+        Route::get('/rapports-nationaux/{id}', [RapportNationalController::class, 'show']);
+        Route::get('/rapports-nationaux/{id}/export/pdf', [RapportNationalController::class, 'exportPdf']);
+        Route::get('/rapports-nationaux/{id}/export/excel', [RapportNationalController::class, 'exportExcel']);
 
 
 Route::get('/documents/{id}/download', [DocumentController::class, 'download'])
         ->middleware('signed')->name('documents.download');
+// Lecture et Téléchargement
+Route::get('/documents/{id}/signed-url', [DocumentController::class, 'signedUrl']);
+Route::get('/documents/{id}/file', [DocumentController::class, 'downloadFile'])->name('documents.download-file');
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
@@ -99,6 +107,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/documents',                  [DocumentController::class, 'index']);
     Route::get('/documents/{id}',             [DocumentController::class, 'show']);
     Route::get('/documents/{id}/signed-url',  [DocumentController::class, 'signedUrl']);
+    Route::get('/projects/{projectId}/documents', [DocumentController::class, 'listByProject']);
+    Route::get('/composantes/{composanteId}/documents', [DocumentController::class, 'listByComposante']);
     
 
     Route::get('/depenses',      [DepenseController::class, 'index']);
@@ -160,7 +170,7 @@ Route::middleware('auth:sanctum')->group(function () {
     //public page
 
 
-    Route::get('/devises', [DeviseController::class, 'index']);
+        Route::get('/devises', [DeviseController::class, 'index']);
             // --- HERO ---
         Route::post('/heros', [HeroController::class, 'store']);
         Route::put('/heros/{id}', [HeroController::class, 'update']);
@@ -239,6 +249,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/activites/{id}', [ActiviteController::class, 'show']);
         Route::get('/activites/projet/{id}', [ActiviteController::class, 'getByProjet']);
         Route::get('/activites/composante/{id}', [ActiviteController::class, 'getByComposante']);
+
+        
 
     
         
@@ -411,6 +423,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/depenses/{id}', [BudgetStageController::class, 'updateDepense']);
     Route::delete('/depenses/{id}', [BudgetStageController::class, 'destroyDepense']);
     Route::post('/depenses/{id}/audit', [BudgetStageController::class, 'auditDepense']);
+
+    // ─── 8. Rapports nationaux (rapportNationalApi) ───
+    Route::post('/rapports-nationaux', [RapportNationalController::class, 'store']);
+    Route::post('/rapports-nationaux/{id}/generate', [RapportNationalController::class, 'generate']);
+    Route::delete('/rapports-nationaux/{id}', [RapportNationalController::class, 'destroy']);
 
     });
 

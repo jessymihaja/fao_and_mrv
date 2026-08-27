@@ -4,125 +4,140 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Document;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
-use Illuminate\Support\Str;
-
 
 class DocumentController extends Controller
 {
-
-    public function index(Request $request): JsonResponse
-    {
-        $documents = Document::with(['projet', 'financement'])
-            ->when($request->filled('project_id'), fn ($q) => $q->where('project_id', $request->integer('project_id')))
-            ->when($request->filled('type'),        fn ($q) => $q->where('type', $request->type))
-            ->orderByDesc('created_at')
-            ->paginate($request->integer('per_page', 20));
-
-        return response()->json($documents);
-    }
-
-    public function byProject(int $projectId): JsonResponse
-    {
-        $documents = Document::with('financement')
-            ->where('project_id', $projectId)
-            ->orderByDesc('created_at')
-            ->get();
-
-        return response()->json($documents);
-    }
-
-    public function store(Request $request): JsonResponse
-    {
-        $request->validate([
-            'titre'          => ['nullable', 'string', 'max:255'],
-            'type'           => ['required', 'in:rapport,contrat,accord,plan,etude,photo,autre'],
-            'fichier'        => ['required', 'file', 'max:51200', 'mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png,zip'],
-            'project_id'     => ['required', 'exists:projets,id_projet'],
-            'financement_id' => ['nullable', 'exists:financements,id'],
-            'description'    => ['nullable', 'string'],
-        ]);
-
-        $file     = $request->file('fichier');
-        $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
-        $path     = $file->storeAs('documents', $filename, 'public');
-
-        $document = Document::create([
-            'titre'            => $request->filled('titre') ? $request->titre : $file->getClientOriginalName(),
-            'type'             => $request->type,
-            'fichier'          => $path,
-            'fichier_original' => $file->getClientOriginalName(),
-            'taille'           => $file->getSize(),
-            'mime_type'        => $file->getMimeType(),
-            'project_id'       => $request->integer('project_id'),
-            'financement_id'   => $request->integer('financement_id') ?: null,
-            'description'      => $request->description,
-            'uploaded_by'      => auth()->id(),
-        ]);
-        
-
-
-        return response()->json($document->load(['project', 'financement']));
-    }
-
-    public function show(int $id): JsonResponse
-    {
-        return response()->json(
-            Document::with(['project', 'financement'])->findOrFail($id)
-        );
-    }
-
-    public function destroy(int $id): JsonResponse
-    {
-        $document = Document::findOrFail($id);
-
-        Storage::disk('public')->delete($document->fichier);
-        $document->delete();
-
-        return response()->json(['message' => 'Document supprimé.']);
-    }
-
     /**
-     * Téléchargement via URL signée temporaire (15 min).
-     * Accessible sans header Authorization — le token est dans la signature URL.
-     * Appelé via GET /documents/{id}/download?signature=...&expires=...
+     * Liste paginée des documents
      */
-    public function download(int $id)
+    public function index(Request $request)
     {
-        $document = Document::findOrFail($id);
+        $query = Document::with(['project', 'financement']);
 
-        if (! Storage::disk('public')->exists($document->fichier)) {
-            return response()->json(['message' => 'Fichier introuvable.'], 404);
+        if ($request->filled('project_id')) {
+            $query->where('project_id', $request->project_id);
+        }
+        if ($request->filled('composante_id')) {
+            $query->where('composante_id', $request->composante_id);
         }
 
-        return Storage::disk('public')->download(
-            $document->fichier,
-            $document->fichier_original ?? basename($document->fichier)
-        );
+        return response()->json($query->latest()->paginate($request->get('per_page', 15)));
     }
 
     /**
-     * Génère une URL signée temporaire (15 min) pour le téléchargement.
-     * Le frontend appelle d'abord cet endpoint (avec Bearer token),
-     * puis redirige/ouvre l'URL signée retournée.
-     *
-     * GET /documents/{id}/signed-url
+     * Liste des documents par projet
      */
-    public function signedUrl(int $id): JsonResponse
+    public function listByProject($projectId)
     {
-        // Vérifie que le document existe
-        Document::findOrFail($id);
+        $documents = Document::where('project_id', $projectId)->latest()->get();
+        return response()->json($documents);
+    }
 
-        $url = URL::temporarySignedRoute(
-            'documents.download',
-            now()->addMinutes(15),
-            ['id' => $id]
-        );
+    /**
+     * Liste des documents par composante
+     */
+    public function listByComposante($composanteId)
+    {
+        $documents = Document::where('composante_id', $composanteId)->latest()->get();
+        return response()->json($documents);
+    }
 
-        return response()->json(['url' => $url]);
+    /**
+     * Upload d'un document (FormData)
+     */
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'titre' => 'required|string|max:255',
+            'type' => 'required|string',
+            'fichier' => 'required|file|max:20480', // Max 20 Mo
+            'project_id' => 'required|exists:projets,id_projet',
+            'composante_id' => 'nullable|exists:composantes,id',
+            'financement_id' => 'nullable|exists:financements,id',
+            'description' => 'nullable|string',
+        ]);
+
+        $file = $request->file('fichier');
+        $originalName = $file->getClientOriginalName();
+        $mimeType = $file->getClientMimeType();
+        $size = $file->getSize();
+
+        // Enregistrement sur le disk public (storage/app/public/documents)
+        $path = $file->store('documents', 'public');
+
+        $document = Document::create([
+            'titre' => $validated['titre'],
+            'type' => $validated['type'],
+            'fichier' => $path,
+            'fichier_original' => $originalName,
+            'taille' => $size,
+            'mime_type' => $mimeType,
+            'project_id' => $validated['project_id'],
+            'composante_id' => $validated['composante_id'] ?? null,
+            'financement_id' => $validated['financement_id'] ?? null,
+            'description' => $validated['description'] ?? null,
+            'uploaded_by' => auth()->id(),
+        ]);
+
+        return response()->json($document->load(['project', 'financement']), 201);
+    }
+
+    /**
+     * Affichage d'un document
+     */
+    public function show($id)
+    {
+        $document = Document::with(['project', 'financement'])->findOrFail($id);
+        return response()->json($document);
+    }
+
+    /**
+     * Génération de l'URL signée ou directe pour le téléchargement
+     */
+    public function signedUrl($id)
+{
+    $document = Document::findOrFail($id);
+
+    return response()->json([
+        'url' => route('documents.download-file', ['id' => $document->id])
+    ]);
+}
+
+/**
+ * Lit et sert le fichier au navigateur sans passer par un symlink
+ */
+public function downloadFile($id)
+{
+    $document = Document::findOrFail($id);
+
+    if (!Storage::disk('public')->exists($document->fichier)) {
+        return response()->json(['message' => 'Fichier introuvable sur le disque'], 404);
+    }
+
+    $fullPath = Storage::disk('public')->path($document->fichier);
+
+    return response()->file($fullPath, [
+        'Content-Type' => $document->mime_type ?? mime_content_type($fullPath),
+        'Content-Disposition' => 'inline; filename="' . ($document->fichier_original ?? basename($document->fichier)) . '"'
+    ]);
+}
+
+    /**
+     * Suppression d'un document et de son fichier physiquement
+     */
+    public function destroy($id)
+    {
+        $document = Document::findOrFail($id);
+
+        if (Storage::disk('public')->exists($document->fichier)) {
+            Storage::disk('public')->delete($document->fichier);
+        }
+
+        $document->delete();
+
+        return response()->json(['message' => 'Document supprimé avec succès']);
     }
 }

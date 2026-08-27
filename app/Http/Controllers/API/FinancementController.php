@@ -42,7 +42,6 @@ class FinancementController extends Controller
             'source_financement'         => 'required|string',
             'budget_approuve'            => 'required|numeric',
             'devise'                     => 'required|string',
-            'montant_mga'                => 'required|numeric',
             'date_approbation'           => 'required|date',
             'description'                => 'nullable|string',
             'categorie_contribution_id'  => 'nullable|integer',
@@ -51,7 +50,6 @@ class FinancementController extends Controller
             'contributions.*.mode_contribution'         => 'required|string',
             'contributions.*.montant'                   => 'required|numeric',
             'contributions.*.devise'                    => 'required|string',
-            'contributions.*.montant_mga'               => 'required|numeric',
             'contributions.*.date_contribution'          => 'required|date',
             'contributions.*.categorie_contribution_id' => 'nullable|integer',
             'contributions.*.description'               => 'nullable|string',
@@ -87,7 +85,6 @@ class FinancementController extends Controller
             'source_financement'         => 'required|string',
             'budget_approuve'            => 'required|numeric',
             'devise'                     => 'required|string',
-            'montant_mga'                => 'required|numeric',
             'date_approbation'           => 'required|date',
             'description'                => 'nullable|string',
             'categorie_contribution_id'  => 'nullable|integer',
@@ -96,7 +93,6 @@ class FinancementController extends Controller
             'contributions.*.mode_contribution'         => 'required|string',
             'contributions.*.montant'                   => 'required|numeric',
             'contributions.*.devise'                    => 'required|string',
-            'contributions.*.montant_mga'               => 'required|numeric',
             'contributions.*.date_contribution'          => 'required|date',
             'contributions.*.categorie_contribution_id' => 'nullable|integer',
             'contributions.*.description'               => 'nullable|string',
@@ -147,7 +143,7 @@ class FinancementController extends Controller
         $totalUSD = (float) (clone $query)->where('devise', 'USD')->sum('budget_approuve');
         $totalEUR = (float) (clone $query)->where('devise', 'EUR')->sum('budget_approuve');
         $totalAR  = (float) (clone $query)->where('devise', 'AR')->sum('budget_approuve');
-        $totalMGA = (float) (clone $query)->sum('montant_mga');
+        $totalMGA = (float) (clone $query)->sum('budget_approuve');
 
         return response()->json([
             'total_count' => (clone $query)->count(),
@@ -173,7 +169,7 @@ class FinancementController extends Controller
                 'AR'  => (float) $financements->where('devise', 'AR')->sum('budget_approuve'),
                 'USD' => (float) $financements->where('devise', 'USD')->sum('budget_approuve'),
                 'EUR' => (float) $financements->where('devise', 'EUR')->sum('budget_approuve'),
-                'MGA' => (float) $financements->sum('montant_mga'),
+                'MGA' => (float) $financements->where('devise','AR')->sum('budget_approuve'),
             ],
         ]);
     }

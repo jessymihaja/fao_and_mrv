@@ -29,7 +29,7 @@ class ProjetController extends Controller
     'classifications', 
     'entiteAccreditees', 
     'domainesIntervention', 
-    ]) ->withSum( ['financements as budget_total' => function ($query) { $query->selectRaw('COALESCE(SUM(montant_mga * budget_approuve), 0)'); }], \DB::raw('montant_mga * budget_approuve') ) ->when( $request->filled('search'),
+    ]) ->withSum( ['financements as budget_total' => function ($query) { $query->selectRaw('COALESCE(SUM( budget_approuve), 0)'); }], \DB::raw(' budget_approuve') ) ->when( $request->filled('search'),
      fn ($q) => $q->where(function ($s) use ($request) { 
         $s->where('titre', 'ilike', "%{$request->search}%") 
         ->orWhere('description', 'ilike', "%{$request->search}%"); }) ) 
@@ -260,24 +260,73 @@ class ProjetController extends Controller
         return response()->json($projets);
     }   
     public function mapData(): JsonResponse
-    {
-        $projects = Projet::with('region', 'status')
-            ->where('is_published', true)
-            ->whereNotNull('latitude')
-            ->whereNotNull('longitude')
-            ->select(['id_projet', 'titre', 'status_id', 'latitude', 'longitude', 'region_id'])
-            ->get()
-            ->map(fn (Projet $p) => [
-                'id'                 => $p->id_projet,
-                'titre'              => $p->titre,
-                'statut'             => $p->status?->designation,
-                'latitude'           => (float) $p->latitude,
-                'longitude'          => (float) $p->longitude,
-                'region'             => $p->region?->nom,
-            ]);
+{
+    // Chargement de tous les projets publiés
+    $projects = Projet::with([
+        'region', 
+        'status', 
+        'classifications', 
+        'entiteAccreditees', 
+        'domainesIntervention'
+    ])
+    ->where('is_published', true)
+    ->get();
 
-        return response()->json($projects);
-    }
+    // 1. Regroupement par Région (RegionMapPoint[])
+    $regionsData = $projects
+        ->whereNotNull('region_id')
+        ->groupBy('region_id')
+        ->map(function ($regionProjects) {
+            $first = $regionProjects->first();
+            $region = $first->region;
+
+            return [
+                'region_id' => (int) $first->region_id,
+                'region'    => $region?->nom ?? 'Inconnue',
+                'latitude'  => (float) ($region?->latitude ?? $first->latitude ?? 0),
+                'longitude' => (float) ($region?->longitude ?? $first->longitude ?? 0),
+                'projects'  => $regionProjects->map(fn (Projet $p) => [
+                    'id'                    => (int) $p->id_projet,
+                    'id_projet'             => (string) $p->id_projet,
+                    'titre'                 => $p->titre,
+                    'statut'                => $p->status?->designation ?? $p->status?->libelle,
+                    'classifications'       => $p->classifications->pluck('nom')->toArray(),
+                    'entites_accreditees'   => $p->entiteAccreditees->pluck('nom')->toArray(),
+                    'domaines_intervention' => $p->domainesIntervention->pluck('nom')->toArray(),
+                ])->values()->all(),
+            ];
+        })
+        ->values()
+        ->all();
+
+    // 2. Extraction des zones / coordonnées géographiques spécifiques (ProjectZoneMapPoint[])
+    $projectZonesData = $projects
+        ->filter(fn (Projet $p) => !is_null($p->latitude) && !is_null($p->longitude))
+        ->map(fn (Projet $p) => [
+            'id'                    => (int) $p->id_projet,
+            'id_projet'             => (string) $p->id_projet,
+            'titre'                 => $p->titre,
+            'statut'                => $p->status?->designation ?? $p->status?->libelle,
+            'classifications'       => $p->classifications->pluck('nom')->toArray(),
+            'entites_accreditees'   => $p->entiteAccreditees->pluck('nom')->toArray(),
+            'domaines_intervention' => $p->domainesIntervention->pluck('nom')->toArray(),
+            'zone_points'           => [
+                [
+                    'latitude'  => (float) $p->latitude,
+                    'longitude' => (float) $p->longitude,
+                ]
+            ],
+        ])
+        ->values()
+        ->all();
+
+    // 3. Assemblage de la réponse conforme à MapDataResponse
+    return response()->json([
+        'regions'               => $regionsData,
+        'project_zones'         => $projectZonesData,
+        'total_projects_on_map' => $projects->count(),
+    ]);
+}
     public function advanceStep(Request $request, $id): JsonResponse
     {
         $request->validate([

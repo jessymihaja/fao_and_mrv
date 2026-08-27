@@ -52,13 +52,13 @@ class BudgetCycleController extends Controller
     }
 
     private function buildSummary($financements, $pledges, $mobilisations, $engagements, $approbations, $programmations, $decaissements, $depenses) {
-        $totPledge = $pledges->sum('montant_mga');
-        $totMobilise = $mobilisations->sum('montant_mga');
-        $totEngage = $engagements->sum('montant_mga');
-        $totApprouve = $approbations->sum('montant_mga');
-        $totProgramme = $programmations->sum('montant_mga');
-        $totDecaisse = $decaissements->sum('montant_mga');
-        $totDepense = $depenses->sum('montant_mga');
+        $totPledge = $pledges->sum('montant');
+        $totMobilise = $mobilisations->sum('montant');
+        $totEngage = $engagements->sum('montant');
+        $totApprouve = $approbations->sum('montant');
+        $totProgramme = $programmations->sum('montant');
+        $totDecaisse = $decaissements->sum('montant');
+        $totDepense = $depenses->sum('montant');
         $totAudite = $depenses->where('statut', 'audite')->sum('montant_audite');
 
         $baseRef = $totApprouve > 0 ? $totApprouve : ($totPledge > 0 ? $totPledge : 1);
@@ -93,13 +93,13 @@ class BudgetCycleController extends Controller
                 'taux_execution'    => $totDecaisse > 0 ? round(($totDepense / $totDecaisse) * 100, 2) : null,
             ],
             'cascade' => [
-                ['stage' => 'Annoncé', 'montant_mga' => $totPledge],
-                ['stage' => 'Mobilisé', 'montant_mga' => $totMobilise],
-                ['stage' => 'Approuvé', 'montant_mga' => $totApprouve],
-                ['stage' => 'Engagé', 'montant_mga' => $totEngage],
-                ['stage' => 'Programmé', 'montant_mga' => $totProgramme],
-                ['stage' => 'Décaissé', 'montant_mga' => $totDecaisse],
-                ['stage' => 'Dépensé', 'montant_mga' => $totDepense],
+                ['stage' => 'Annoncé', 'montant' => $totPledge],
+                ['stage' => 'Mobilisé', 'montant' => $totMobilise],
+                ['stage' => 'Approuvé', 'montant' => $totApprouve],
+                ['stage' => 'Engagé', 'montant' => $totEngage],
+                ['stage' => 'Programmé', 'montant' => $totProgramme],
+                ['stage' => 'Décaissé', 'montant' => $totDecaisse],
+                ['stage' => 'Dépensé', 'montant' => $totDepense],
             ]
         ];
     }
