@@ -38,42 +38,58 @@ class Resultat_mrvController extends Controller
     }
 
     public function store(Request $request): JsonResponse
-    {
-        $request->validate([
-            'projet_id'         => 'nullable',
-            'composante_id'     => 'nullable',
-            'activite_id'       => 'nullable',
-            'indicateur_mrv_id' => 'required',
-            'valeur_cible'      => 'required',
-            'valeur_realise'    => 'required',
-            'annee'             => 'required',
-        ]);
+{
+    // 1. Normalisation des données envoyées par FormData React
+    $request->merge([
+        'projet_id'      => $request->input('projet_id') ?? $request->input('project_id'),
+        'valeur_realise' => $request->input('valeur_realise') ?? $request->input('valeur_realisee'),
+        'annee'          => $request->input('annee') ?? ($request->input('date_reference') ? substr($request->input('date_reference'), 0, 4) : null),
+    ]);
 
-        $data = $request->all();
+    // 2. Validation avec les bons noms de champs
+    $validated = $request->validate([
+        'projet_id'         => 'nullable|integer',
+        'composante_id'     => 'nullable|integer',
+        'activite_id'       => 'nullable|integer',
+        'indicateur_mrv_id' => 'nullable', // Passer en nullable si non fourni par la form React
+        'valeur_cible'      => 'required',
+        'valeur_realise'    => 'required',
+        'annee'             => 'required',
+    ]);
 
-        // Création depuis une composante
-        if (!$request->projet_id && $request->composante_id) {
-            $composante = Composante::findOrFail($request->composante_id);
-            $data['projet_id'] = $composante->projet_id;
-        }
+    $data = $request->all();
 
-        // Création depuis une activité
-        if (!$request->projet_id && $request->activite_id) {
-            $activite = Activite::with('composante')->findOrFail($request->activite_id);
-            $data['projet_id'] = $activite->projet_id;
-        }
-
-        // Sécurité
-        if (!$data['projet_id']) {
-            return response()->json([
-                'message' => 'Impossible de déterminer le projet associé'
-            ], 422);
-        }
-
-        $resultat = Resultat_mrv::create($data);
-
-        return response()->json($resultat);
+    // 3. Détermination automatique du projet_id
+    if (empty($data['projet_id']) && !empty($request->composante_id)) {
+        $composante = Composante::findOrFail($request->composante_id);
+        $data['projet_id'] = $composante->projet_id;
     }
+
+    if (empty($data['projet_id']) && !empty($request->activite_id)) {
+        $activite = Activite::with('composante')->findOrFail($request->activite_id);
+        $data['projet_id'] = $activite->projet_id ?? $activite->composante?->projet_id;
+    }
+
+    // Sécurité
+    if (empty($data['projet_id'])) {
+        return response()->json([
+            'message' => 'Impossible de déterminer le projet associé'
+        ], 422);
+    }
+
+    // 4. Gestion de l'upload des fichiers (justificatifs)
+    $resultat = Resultat_mrv::create($data);
+
+    if ($request->hasFile('justificatifs')) {
+        foreach ($request->file('justificatifs') as $file) {
+            $path = $file->store('justificatifs', 'public');
+            // Sauvegarde dans la table liée si applicable :
+            // $resultat->justificatifs()->create(['path' => $path]);
+        }
+    }
+
+    return response()->json($resultat, 201);
+}
 
     public function update(Request $request, $id): JsonResponse
 {

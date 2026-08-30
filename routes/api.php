@@ -40,7 +40,14 @@ use App\Http\Controllers\Api\SecteurController;
 use App\Http\Controllers\API\BudgetStageController;
 use App\Http\Controllers\API\BudgetCycleController;
 use App\Http\Controllers\API\RapportNationalController;
-
+use App\Http\Controllers\API\ResultTypeController;
+use App\Http\Controllers\API\ResultController;
+use App\Http\Controllers\API\BeneficiaryTypeController;
+use App\Http\Controllers\API\BeneficiaryCategoryController;
+use App\Http\Controllers\API\BeneficiaryController;
+use App\Http\Controllers\API\DepenseSummaryController;
+use App\Http\Controllers\API\PerspectiveTypeController;
+use App\Http\Controllers\API\ProjectPerspectiveController;
 
 Route::get('/test', function () {
     return response()->json([
@@ -48,19 +55,19 @@ Route::get('/test', function () {
     ]);
 });
 
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
+Route::post('/users', [AuthController::class, 'register']);
+Route::post('/auth/login', [AuthController::class, 'login']);
 Route::get('/heros', [HeroController::class, 'index']);
 Route::get('/maps/{id}', [MapController::class, 'show']);
 Route::get('/maps', [MapController::class, 'index']);
 Route::get ('/public/stats',         [StatsController::class, 'public']);
 Route::get ('/public/projects/map',  [ProjetController::class, 'mapData']);
-Route::get('/sliders-public', [SliderController::class, 'active_sliders']);
-Route::get('/partners-public', [PartnerController::class, 'active_partners']);
-Route::get('/projets-paginated', [ProjetController::class, 'getPaginatedProjects']);
-Route::get('/chatbot-settings-public', [ChatbotSettingController::class, 'publicSettings']);
-Route::get('/faqs-public', [FaqsController::class, 'active_faqs']);
-Route::get('/public-settings', [PublicSettingsController::class, 'index']);
+Route::get('/public/slider', [SliderController::class, 'active_sliders']);
+Route::get('/public/partners', [PartnerController::class, 'active_partners']);
+Route::get('/public/projects', [ProjetController::class, 'getPaginatedProjects']);
+Route::get('/chatbot/settings/public', [ChatbotSettingController::class, 'publicSettings']);
+Route::get('/public/faq', [FaqsController::class, 'active_faqs']);
+Route::get('/public/settings', [PublicSettingsController::class, 'index']);
 // ─── LECTURE ET EXPORTS (GET) ─────────────────────────────────
         Route::get('/rapports-nationaux', [RapportNationalController::class, 'index']);
         Route::get('/rapports-nationaux/{id}', [RapportNationalController::class, 'show']);
@@ -74,9 +81,14 @@ Route::get('/documents/{id}/download', [DocumentController::class, 'download'])
 Route::get('/documents/{id}/signed-url', [DocumentController::class, 'signedUrl']);
 Route::get('/documents/{id}/file', [DocumentController::class, 'downloadFile'])->name('documents.download-file');
 
+// ─── PERSPECTIVES ─────────────────────────────────────────────────────────────────────────
+Route::get('/public/stats/perspectives', [ProjectPerspectiveController::class, 'publicStats']);
+Route::get('/public/perspective-types', [PerspectiveTypeController::class, 'index']);
+Route::get('/public/perspectives', [ProjectPerspectiveController::class, 'publicList']);
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
-    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::post('/auth/logout', [AuthController::class, 'logout']);
 
     // lecture
     Route::get('/classifications', [ClassificationController::class, 'index']);
@@ -91,15 +103,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/projets/number', [ProjetController::class, 'projectsNumber']);
     Route::get('/projets/number-active', [ProjetController::class, 'projectsNumberActive']);
     Route::get('/projets/filter', [ProjetController::class, 'projectsfilter']);
-    Route::get('/projets/{id}', [ProjetController::class, 'show']);
+    Route::get('/projects/{id}', [ProjetController::class, 'show']);
     Route::get('/projects/{id}/depenses', [DepenseController::class, 'projectDepenses']);
 
-    Route::get('/projets/{id}/financements', [FinancementController::class, 'byProject']);
+    Route::get('/projects/{id}/financements', [FinancementController::class, 'byProject']);
+    Route::get('/financements/totaux', [FinancementController::class, 'financementsTotauxMGA']);
     Route::get('/financements', [FinancementController::class, 'index']);
     Route::get('/fundings', [FinancementController::class, 'index']);
     Route::get('/financements/number', [FinancementController::class, 'financementsNumber']);
     Route::get('/financements/{id}', [FinancementController::class, 'show']);
-    Route::get('/financements-totaux', [FinancementController::class, 'financementsTotauxMGA']);
+    
 
     Route::get('/financements/{id}/engagements', [EngagementController::class, 'engagements']);
     Route::get('/financements/{id}/decaissements', [DecaissementController::class, 'decaissements']);
@@ -181,43 +194,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/maps/{id}', [MapController::class, 'update']);
         Route::delete('/maps/{id}', [MapController::class, 'destroy']);
 
-        // --- CHATBOT KNOWLEDGE ---
-        Route::post('/chatbot-knowledges', [ChatbotKnowledgeController::class, 'storeKnowledge']);
-        Route::put('/chatbot-knowledges/{id}', [ChatbotKnowledgeController::class, 'updateKnowledge']);
-        Route::delete('/chatbot-knowledges/{id}', [ChatbotKnowledgeController::class, 'destroyKnowledge']);
-        Route::get('/chatbot-knowledges', [ChatbotKnowledgeController::class, 'knowledge']);
 
-        // --- CHATBOT SETTINGS ---
-        
-        Route::put('/chatbot-settings', [ChatbotSettingController::class, 'updateSettings']);
-        Route::get('/chatbot-settings-admin', [ChatbotSettingController::class, 'settings']);
-        Route::post ('/chatbot-message', [ChatbotSettingController::class, 'message']);
+        Route::get('/chatbot/knowledge', [ChatbotKnowledgeController::class, 'knowledge']);
+        Route::get('/cms/faq', [FaqsController::class, 'index']);
+        Route::get('/cms/partners', [PartnerController::class, 'index']);
+        Route::get('/cms/contacts', [ContactController::class, 'index']);
 
-        // --- FAQS ---
-        Route::post('/faqs', [FaqsController::class, 'store']);
-        Route::put('/faqs/{id}', [FaqsController::class, 'update']);
-        Route::delete('/faqs/{id}', [FaqsController::class, 'destroy']);
-        Route::get('/faqs', [FaqsController::class, 'index']);
-        
-
-        // --- PARTNERS ---
-        Route::post('/partners', [PartnerController::class, 'store']);
-        Route::put('/partners/{id}', [PartnerController::class, 'update']);
-        Route::delete('/partners/{id}', [PartnerController::class, 'destroy']);
-        Route::get('/partners', [PartnerController::class, 'index']);
-        
-
-        // --- CONTACTS ---
-        Route::post('/contacts', [ContactController::class, 'store']);
-        Route::put('/contacts/{id}', [ContactController::class, 'update']);
-        Route::delete('/contacts/{id}', [ContactController::class, 'destroy']);
-        Route::get('/contacts', [ContactController::class, 'index']);
-
-        // --- SLIDERS ---
-        Route::post('/sliders', [SliderController::class, 'store']);
-        Route::put('/sliders/{id}', [SliderController::class, 'update']);
-        Route::delete('/sliders/{id}', [SliderController::class, 'destroy']);
-        Route::get('/sliders', [SliderController::class, 'index']);
+        Route::get('/cms/slider', [SliderController::class, 'index']);
 
         // --- Statistiques ---
         Route::get('/stats/global',             [StatsController::class, 'global']);
@@ -229,33 +212,79 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/activity-logs', [ActivityLogController::class, 'index']);
 
         // ---  MRV ---
-        Route::get('/resultat-mrvs', [Resultat_mrvController::class, 'index']);
-        Route::get('/resultat-mrvs/composante/{id}', [Resultat_mrvController::class, 'getByComposite']);
-        Route::get('/resultat-mrvs/activite/{id}', [Resultat_mrvController::class, 'getByActivite']);
-        Route::get('/resultat-mrvs/projet/{id}', [Resultat_mrvController::class, 'getByProjet']);
-        Route::get('/resultat-mrvs/{id}', [Resultat_mrvController::class, 'show']);
-        Route::get('/indicateur-mrvs', [Indicateur_mrvController::class, 'index']);
-        Route::get('/indicateur-mrvs/{id}', [Indicateur_mrvController::class, 'show']);
+        Route::get('/indicateurs', [Resultat_mrvController::class, 'index']);
+        Route::get('/composantes/{id}/indicateurs', [Resultat_mrvController::class, 'getByComposite']);
+        Route::get('/activites/{id}/indicateurs', [Resultat_mrvController::class, 'getByActivite']);
+        Route::get('/projects/{id}/indicateurs', [Resultat_mrvController::class, 'getByProjet']);
+        Route::get('/indicateurs/{id}', [Resultat_mrvController::class, 'show']);
+        Route::get('/indicateur-referentiels', [Indicateur_mrvController::class, 'index']);
+        Route::get('/indicateur-referentiels/{id}', [Indicateur_mrvController::class, 'show']);
         Route::get('/indicateur-kpis', [Resultat_mrvController::class, 'getKpis']);
 
 
         // --- COMPOSANTES ---
         Route::get('/composantes', [ComposanteController::class, 'index']);
         Route::get('/composantes/{id}', [ComposanteController::class, 'show']);
-        Route::get('/composantes/projet/{id}', [ComposanteController::class, 'getByProjet']);
+        Route::get('/projects/{id}/composantes', [ComposanteController::class, 'getByProjet']);
 
         // --- ACTIVITES ---
         Route::get('/activites', [ActiviteController::class, 'index']);
         Route::get('/activites/{id}', [ActiviteController::class, 'show']);
-        Route::get('/activites/projet/{id}', [ActiviteController::class, 'getByProjet']);
-        Route::get('/activites/composante/{id}', [ActiviteController::class, 'getByComposante']);
+        Route::get('/projects/{id}/activites', [ActiviteController::class, 'getByProjet']);
+        Route::get('/composantes/{id}/activites', [ActiviteController::class, 'getByComposante']);
 
         
+        // --- RESULTATS ---
+        Route::get('/projects/{projectId}/results', [ResultController::class, 'listByProject']);
+        Route::get('/results/{id}', [ResultController::class, 'show']);
 
+        // --- BÉNÉFICIAIRES ---
+        Route::get('/projects/{projectId}/beneficiaries', [BeneficiaryController::class, 'listByProject']);
+        Route::get('/beneficiaries/{id}', [BeneficiaryController::class, 'show']);
+
+        // --- BUDGET DEPENSES ---
+        Route::get('/projects/{projectId}/depenses-summary', [DepenseSummaryController::class, 'summaryByProject']);
+
+        // --- PERSPECTIVES ---
+        Route::get('/perspective-types', [PerspectiveTypeController::class, 'index']);
+        Route::get('/projects/{projectId}/perspectives', [ProjectPerspectiveController::class, 'listByProject']);
     
+    //admin + gestionnaire + gestionnaire_cms
+    Route::middleware('role:admin,gestionnaire,gestionnaire_cms')->group(function () {
+        // --- CHATBOT KNOWLEDGE ---
+        Route::post('/chatbot/knowledge', [ChatbotKnowledgeController::class, 'storeKnowledge']);
+        Route::put('/chatbot/knowledge/{id}', [ChatbotKnowledgeController::class, 'updateKnowledge']);
+        Route::delete('/chatbot/knowledge/{id}', [ChatbotKnowledgeController::class, 'destroyKnowledge']);
+
+        // --- CHATBOT SETTINGS ---
+        Route::put('/chatbot/settings', [ChatbotSettingController::class, 'updateSettings']);
+        Route::get('/chatbot/settings', [ChatbotSettingController::class, 'settings']);
+        Route::post ('/chatbot/message', [ChatbotSettingController::class, 'message']);
+
+        // --- FAQS ---
+        Route::post('/cms/faq', [FaqsController::class, 'store']);
+        Route::put('/cms/faq/{id}', [FaqsController::class, 'update']);
+        Route::delete('/cms/faq/{id}', [FaqsController::class, 'destroy']);
+
+        // --- PARTNERS ---
+        Route::post('/cms/partners', [PartnerController::class, 'store']);
+        Route::put('/cms/partners/{id}', [PartnerController::class, 'update']);
+        Route::delete('/cms/partners/{id}', [PartnerController::class, 'destroy']);
+
+        // --- CONTACTS ---
+        Route::post('/public/contact', [ContactController::class, 'store']);
+        Route::put('/cms/contacts/{id}', [ContactController::class, 'update']);
+        Route::delete('/cms/contacts/{id}', [ContactController::class, 'destroy']);
+
+         // --- SLIDERS ---
+        Route::post('/cms/slider', [SliderController::class, 'store']);
+        Route::put('/cms/slider/{id}', [SliderController::class, 'update']);
+        Route::delete('/cms/slider/{id}', [SliderController::class, 'destroy']);
+
+    });
         
     // admin + gestionnaire
-    Route::middleware('role:admin,gestionnaire')->group(function () {
+    Route::middleware('role:admin,gestionnaire,gestionnaire_cms')->group(function () {
         // --- USERS ---
         Route::get('/users', [AuthController::class, 'getUsersPaginated']);
         // --- CLASSIFICATIONS ---
@@ -284,11 +313,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/domaine-interventions/{id}', [DomaineInterventionController::class, 'destroy']);
 
         // --- PROJETS ---
-        Route::post('/projets', [ProjetController::class, 'store']);
-        Route::put('/projets/{id}', [ProjetController::class, 'update']);
-        Route::delete('/projets/{id}', [ProjetController::class, 'destroy']);
-        Route::put('/projets/{id}/step', [ProjetController::class, 'advanceStep']);
-        Route::put('/projets/{id}/geo', [ProjetController::class, 'updateGeo']);
+        Route::post('/projects', [ProjetController::class, 'store']);
+        Route::put('/projects/{id}', [ProjetController::class, 'update']);
+        Route::delete('/projects/{id}', [ProjetController::class, 'destroy']);
+        Route::put('/projects/{id}/wizard-step', [ProjetController::class, 'advanceStep']);
+        Route::put('/projects/{id}/geo', [ProjetController::class, 'updateGeo']);
 
         // --- DEVISES ---
         Route::post('/devises', [DeviseController::class, 'store']);
@@ -341,18 +370,18 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // --- Indicateur MRV ---
         
-        Route::post('/indicateur-mrvs', [Indicateur_mrvController::class, 'store']);
-        Route::put('/indicateur-mrvs/{id}', [Indicateur_mrvController::class, 'update']);
-        Route::delete('/indicateur-mrvs/{id}', [Indicateur_mrvController::class, 'destroy']);
+        Route::post('/indicateur-referentiels', [Indicateur_mrvController::class, 'store']);
+        Route::put('/indicateur-referentiels/{id}', [Indicateur_mrvController::class, 'update']);
+        Route::delete('/indicateur-referentiels/{id}', [Indicateur_mrvController::class, 'destroy']);
 
         // --- Resultat MRV ---
         
-        Route::post('/resultat-mrvs', [Resultat_mrvController::class, 'store']);
-        Route::put('/resultat-mrvs/{id}', [Resultat_mrvController::class, 'update']);
-        Route::delete('/resultat-mrvs/{id}', [Resultat_mrvController::class, 'destroy']);
+        Route::post('/indicateurs', [Resultat_mrvController::class, 'store']);
+        Route::put('/indicateurs/{id}', [Resultat_mrvController::class, 'update']);
+        Route::delete('/indicateurs/{id}', [Resultat_mrvController::class, 'destroy']);
 
         // --- Composantes ---
-        Route::post('/composantes/{projet_id}', [ComposanteController::class, 'store']);
+        Route::post('/projects/{projet_id}/composantes', [ComposanteController::class, 'store']);
         Route::put('/composantes/{id}', [ComposanteController::class, 'update']);
         Route::delete('/composantes/{id}', [ComposanteController::class, 'destroy']);
 
@@ -360,8 +389,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/activites', [ActiviteController::class, 'store']);
         Route::put('/activites/{id}', [ActiviteController::class, 'update']);
         Route::delete('/activites/{id}', [ActiviteController::class, 'destroy']);
-        Route::post('/activites/composante/{composante}', [ActiviteController::class, 'store']);
-        Route::post('/activites/projet/{project}', [ActiviteController::class, 'store']);
+        Route::post('/composantes/{composante}/activites', [ActiviteController::class, 'store']);
+        Route::post('/projects/{project}/activites', [ActiviteController::class, 'store']);
 
         // --- Secteurs ---
         Route::post('/secteurs', [SecteurController::class, 'store']);
@@ -397,7 +426,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ─── 3. Approbations (budgetApprobationApi) ───
     Route::post('/financements/{financementId}/approbations', [BudgetStageController::class, 'storeApprobation']);
-    Route::post('/approbations/{id}', [BudgetStageController::class, 'updateApprobation']);
+    Route::put('/approbations/{id}', [BudgetStageController::class, 'updateApprobation']);
     Route::delete('/approbations/{id}', [BudgetStageController::class, 'destroyApprobation']);
 
     // ─── 4. Engagements (suiviApi) ───
@@ -428,6 +457,36 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/rapports-nationaux', [RapportNationalController::class, 'store']);
     Route::post('/rapports-nationaux/{id}/generate', [RapportNationalController::class, 'generate']);
     Route::delete('/rapports-nationaux/{id}', [RapportNationalController::class, 'destroy']);
+
+    // types de résultats
+    Route::get('/result-types', [ResultTypeController::class, 'index']);
+    Route::post('/result-types', [ResultTypeController::class, 'store']);   
+
+    // résultats
+    Route::post('/projects/{projectId}/results', [ResultController::class, 'store']);
+    Route::post('/results/{id}', [ResultController::class, 'update']);
+    Route::delete('/results/{id}', [ResultController::class, 'destroy']);
+    Route::delete('/results/{resultId}/pieces-jointes/{pieceId}', [ResultController::class, 'deletePieceJointe']);
+
+    // types de bénéficiaires
+    Route::get('/beneficiary-types', [BeneficiaryTypeController::class, 'index']);
+    Route::post('/beneficiary-types', [BeneficiaryTypeController::class, 'store']);
+
+    // catégories de bénéficiaires
+    Route::get('/beneficiary-categories', [BeneficiaryCategoryController::class, 'index']);
+    Route::post('/beneficiary-categories', [BeneficiaryCategoryController::class, 'store']);
+
+    // bénéficiaires
+    Route::post('/projects/{projectId}/beneficiaries', [BeneficiaryController::class, 'store']);
+    Route::put('/beneficiaries/{id}', [BeneficiaryController::class, 'update']);
+    Route::delete('/beneficiaries/{id}', [BeneficiaryController::class, 'destroy']);
+
+    // --- PERSPECTIVES ---
+    Route::post('/perspective-types', [PerspectiveTypeController::class, 'store']);
+    Route::post('/projects/{projectId}/perspectives', [ProjectPerspectiveController::class, 'store']);
+    Route::put('/project-perspectives/{id}', [ProjectPerspectiveController::class, 'update']);
+    Route::delete('/project-perspectives/{id}', [ProjectPerspectiveController::class, 'destroy']);
+
 
     });
 

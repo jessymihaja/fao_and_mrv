@@ -9,6 +9,7 @@ use App\Models\Engagement;
 use App\Models\Financement;
 use App\Models\Projet;
 use App\Models\User;
+use App\Models\Partner;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;  // Gardé uniquement pour updateManual (public_settings sans modèle)
@@ -24,9 +25,28 @@ class StatsController extends Controller
             'projets_actifs'     => Projet::where('is_published', true)->where('status_id', 1)->count(),
             'projets_termines'   => Projet::where('is_published', true)->where('status_id', 2)->count(),
             'projets_planifies'  => Projet::where('is_published', true)->where('status_id', 3)->count(),
+            'nombre_beneficiaires' =>Projet::where('is_published', true)->sum('nombre_beneficiaires'),
+            'nombre_regions' =>Projet::count(),
             'projets_suspendus'  => 0,
             'budget_total'       => (float) Financement::sum(DB::raw('budget_approuve')),
             'total_financements' => Financement::count(),
+            'autres_financements'  => [
+            'cofinancement_public' => (float) DB::table('financement_contributions')
+                ->join('financements', 'financement_contributions.financement_id', '=', 'financements.id')
+                ->join('projets', 'financements.project_id', '=', 'projets.id_projet')
+                ->where('projets.is_published', true)
+                ->where('financements.type_financement', 'cofinancement_public')
+                ->sum('financement_contributions.montant'),
+
+            'cofinancement_prive' => (float) DB::table('financement_contributions')
+                ->join('financements', 'financement_contributions.financement_id', '=', 'financements.id')
+                ->join('projets', 'financements.project_id', '=', 'projets.id_projet')
+                ->where('projets.is_published', true)
+                ->where('financements.type_financement', 'cofinancement_prive')
+                ->sum('financement_contributions.montant'),
+           'budget_total_hors_gcf' => (float) DB::table('financement_contributions')->sum('montant'),
+            'nombre_bailleurs_partenaires'       => Partner::count(),
+        ],
         ]);
     }
 

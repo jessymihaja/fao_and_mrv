@@ -175,7 +175,7 @@ public function generate($id)
             'top_projets' => $topProjets,
         ],
             'physique' => [
-                'total_beneficiaires' => (int)$projets->sum('nb_beneficiaires'),
+                'total_beneficiaires' => (int)$projets->sum('nombre_beneficiaires'),
                 'infrastructures_realisees' => (int)$projets->sum('nb_infrastructures'),
                 'surfaces_restaurees' => (float)$projets->sum('surface_restauree'),
                 'formations_realisees' => (int)$projets->sum('nb_formations'),

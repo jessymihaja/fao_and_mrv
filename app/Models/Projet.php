@@ -12,6 +12,7 @@ use App\Models\DomaineIntervention;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 
 
@@ -40,6 +41,7 @@ class Projet extends Model
         'commune_id',
         'fokontany_id',
         'wizard_step',
+        'nombre_beneficiaires',
         
 
     ];
@@ -83,6 +85,18 @@ public function domainesIntervention(): BelongsToMany
         'id_domaine_intervention'
     );
 }
+    protected $appends = ['id'];
+
+    
+    protected function id(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->id_projet,
+        );
+    }
+
+    
+  
     public function province():  BelongsTo { return $this->belongsTo(Province::class); }
     public function region():    BelongsTo { return $this->belongsTo(Region::class); }
     public function district():  BelongsTo { return $this->belongsTo(District::class); }
@@ -90,6 +104,10 @@ public function domainesIntervention(): BelongsToMany
     public function fokontany(): BelongsTo { return $this->belongsTo(Fokontany::class); }
 
     public function financements(): HasMany { return $this->hasMany(Financement::class,'project_id', 'id_projet'); }
+    public function composantes(): HasMany
+    {
+        return $this->hasMany(Composante::class, 'projet_id', 'id_projet'); 
+    }
     public function documents(): HasMany { return $this->hasMany(Document::class); }
 
 }

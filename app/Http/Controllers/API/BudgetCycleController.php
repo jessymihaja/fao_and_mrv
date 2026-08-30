@@ -9,10 +9,10 @@ use App\Models\{Financement, Projet, BudgetPledge, BudgetMobilisation, BudgetEng
 class BudgetCycleController extends Controller
 {
     private function applyFilters($query, Request $request) {
-        if ($request->has('composante_id')) {
+        if ($request->filled('composante_id')) {
             $query->where('composante_id', $request->composante_id);
         }
-        if ($request->has('activite_id')) {
+        if ($request->filled('activite_id')) {
             $query->where('activite_id', $request->activite_id);
         }
         return $query;
@@ -36,7 +36,7 @@ class BudgetCycleController extends Controller
         $project = Projet::with('financements')->findOrFail($projectId);
         $financementIds = $project->financements->pluck('id');
 
-        if ($request->has('financement_id')) {
+        if ($request->filled('financement_id')) {
             $financementIds = collect([$request->financement_id]);
         }
 
@@ -52,14 +52,14 @@ class BudgetCycleController extends Controller
     }
 
     private function buildSummary($financements, $pledges, $mobilisations, $engagements, $approbations, $programmations, $decaissements, $depenses) {
-        $totPledge = $pledges->sum('montant');
-        $totMobilise = $mobilisations->sum('montant');
-        $totEngage = $engagements->sum('montant');
-        $totApprouve = $approbations->sum('montant');
-        $totProgramme = $programmations->sum('montant');
-        $totDecaisse = $decaissements->sum('montant');
-        $totDepense = $depenses->sum('montant');
-        $totAudite = $depenses->where('statut', 'audite')->sum('montant_audite');
+        $totPledge = (float) $pledges->sum('montant');
+        $totMobilise = (float) $mobilisations->sum('montant');
+        $totEngage = (float) $engagements->sum('montant');
+        $totApprouve = (float) $approbations->sum('montant');
+        $totProgramme = (float) $programmations->sum('montant');
+        $totDecaisse = (float) $decaissements->sum('montant');
+        $totDepense = (float) $depenses->sum('montant');
+        $totAudite = (float) $depenses->where('statut', 'audite')->sum('montant_audite');
 
         $baseRef = $totApprouve > 0 ? $totApprouve : ($totPledge > 0 ? $totPledge : 1);
 
@@ -68,20 +68,20 @@ class BudgetCycleController extends Controller
                 'id' => $f->id,
                 'type_financement' => $f->type_financement ?? 'subvention',
                 'source_financement' => $f->source_financement ?? 'international',
-                'budget_approuve' => $totApprouve,
+                'budget_approuve' => (float) ($f->montant ?? $f->budget_approuve ?? 0),
                 'devise' => $f->devise ?? 'MGA',
             ]),
             'stages' => [
-                'pledge'    => ['label' => 'Annoncé', 'total_mga' => $totPledge, 'count' => $pledges->count(), 'items' => $pledges],
-                'mobilise'  => ['label' => 'Mobilisé', 'total_mga' => $totMobilise, 'count' => $mobilisations->count(), 'items' => $mobilisations],
-                'engage'    => ['label' => 'Engagé', 'total_mga' => $totEngage, 'count' => $engagements->count(), 'items' => $engagements],
-                'approuve'  => ['label' => 'Approuvé', 'total_mga' => $totApprouve, 'count' => $approbations->count(), 'items' => $approbations],
-                'programme' => ['label' => 'Programmé', 'total_mga' => $totProgramme, 'count' => $programmations->count(), 'items' => $programmations],
-                'decaisse'  => ['label' => 'Décaissé', 'total_mga' => $totDecaisse, 'count' => $decaissements->count(), 'items' => $decaissements],
+                'pledge'    => ['label' => 'Annoncé', 'total' => $totPledge, 'count' => $pledges->count(), 'items' => $pledges],
+                'mobilise'  => ['label' => 'Mobilisé', 'total' => $totMobilise, 'count' => $mobilisations->count(), 'items' => $mobilisations],
+                'engage'    => ['label' => 'Engagé', 'total' => $totEngage, 'count' => $engagements->count(), 'items' => $engagements],
+                'approuve'  => ['label' => 'Approuvé', 'total' => $totApprouve, 'count' => $approbations->count(), 'items' => $approbations],
+                'programme' => ['label' => 'Programmé', 'total' => $totProgramme, 'count' => $programmations->count(), 'items' => $programmations],
+                'decaisse'  => ['label' => 'Décaissé', 'total' => $totDecaisse, 'count' => $decaissements->count(), 'items' => $decaissements],
                 'audite'    => [
                     'label' => 'Audité / Dépensé',
-                    'total_mga' => $totDepense,
-                    'total_audite_mga' => $totAudite,
+                    'total' => $totDepense,
+                    'total_audite' => $totAudite,
                     'count' => $depenses->count(),
                     'items' => $depenses
                 ],

@@ -95,6 +95,7 @@ class ProjetController extends Controller
             'objectifs',
             'impact',
             'problematique_climatique',
+            'nombre_beneficiaires',
         ];
 
         $data = $request->all();
@@ -148,6 +149,7 @@ class ProjetController extends Controller
             'impact'                   => 'nullable|string',
             'problematique_climatique' => 'nullable|string',
             'is_published'             => 'nullable|boolean',
+            'nombre_beneficiaires'     => 'nullable|integer',
         ];
 
 
@@ -211,6 +213,7 @@ class ProjetController extends Controller
             'district_id' => 'nullable|integer',
             'commune_id' => 'nullable|integer',
             'fokontany_id' => 'nullable|integer',
+            'nombre_beneficiaires' => 'nullable|integer',
 
         ]);
 
