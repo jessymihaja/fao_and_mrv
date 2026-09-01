@@ -4,7 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\{Financement, Projet, BudgetPledge, BudgetMobilisation, BudgetEngagement, BudgetApprobation, BudgetProgrammation, BudgetDecaissement, BudgetDepense};
+use App\Models\{Financement, Projet, BudgetPledge, BudgetMobilisation, BudgetEngagement, BudgetApprobation, BudgetProgrammation, BudgetDecaissement, BudgetDepense, Decaissement,Engagement};
 
 class BudgetCycleController extends Controller
 {
@@ -23,10 +23,10 @@ class BudgetCycleController extends Controller
         
         $pledges = $this->applyFilters(BudgetPledge::where('financement_id', $financementId), $request)->get();
         $mobilisations = $this->applyFilters(BudgetMobilisation::where('financement_id', $financementId), $request)->get();
-        $engagements = $this->applyFilters(BudgetEngagement::where('financement_id', $financementId), $request)->get();
+        $engagements = $this->applyFilters(Engagement::where('financement_id', $financementId), $request)->get();
         $approbations = $this->applyFilters(BudgetApprobation::where('financement_id', $financementId), $request)->get();
         $programmations = $this->applyFilters(BudgetProgrammation::where('financement_id', $financementId), $request)->get();
-        $decaissements = $this->applyFilters(BudgetDecaissement::where('financement_id', $financementId), $request)->get();
+        $decaissements = $this->applyFilters(Decaissement::where('financement_id', $financementId), $request)->get();
         $depenses = $this->applyFilters(BudgetDepense::where('financement_id', $financementId), $request)->get();
 
         return response()->json($this->buildSummary([$financement], $pledges, $mobilisations, $engagements, $approbations, $programmations, $decaissements, $depenses));
@@ -42,10 +42,10 @@ class BudgetCycleController extends Controller
 
         $pledges = $this->applyFilters(BudgetPledge::whereIn('financement_id', $financementIds), $request)->get();
         $mobilisations = $this->applyFilters(BudgetMobilisation::whereIn('financement_id', $financementIds), $request)->get();
-        $engagements = $this->applyFilters(BudgetEngagement::whereIn('financement_id', $financementIds), $request)->get();
+        $engagements = $this->applyFilters(Engagement::whereIn('financement_id', $financementIds), $request)->get();
         $approbations = $this->applyFilters(BudgetApprobation::whereIn('financement_id', $financementIds), $request)->get();
         $programmations = $this->applyFilters(BudgetProgrammation::whereIn('financement_id', $financementIds), $request)->get();
-        $decaissements = $this->applyFilters(BudgetDecaissement::whereIn('financement_id', $financementIds), $request)->get();
+        $decaissements = $this->applyFilters(Decaissement::whereIn('financement_id', $financementIds), $request)->get();
         $depenses = $this->applyFilters(BudgetDepense::where('project_id', $projectId), $request)->get();
 
         return response()->json($this->buildSummary($project->financements, $pledges, $mobilisations, $engagements, $approbations, $programmations, $decaissements, $depenses));
@@ -55,8 +55,8 @@ class BudgetCycleController extends Controller
         $totPledge = (float) $pledges->sum('montant');
         $totMobilise = (float) $mobilisations->sum('montant');
         $totEngage = (float) $engagements->sum('montant');
-        $totApprouve = (float) $approbations->sum('montant');
-        $totProgramme = (float) $programmations->sum('montant');
+        $totApprouve = (float) $approbations->sum('montant_approuve');
+        $totProgramme = (float) $programmations->sum('montant_prevu');
         $totDecaisse = (float) $decaissements->sum('montant');
         $totDepense = (float) $depenses->sum('montant');
         $totAudite = (float) $depenses->where('statut', 'audite')->sum('montant_audite');
@@ -72,15 +72,15 @@ class BudgetCycleController extends Controller
                 'devise' => $f->devise ?? 'MGA',
             ]),
             'stages' => [
-                'pledge'    => ['label' => 'Annoncé', 'total' => $totPledge, 'count' => $pledges->count(), 'items' => $pledges],
-                'mobilise'  => ['label' => 'Mobilisé', 'total' => $totMobilise, 'count' => $mobilisations->count(), 'items' => $mobilisations],
-                'engage'    => ['label' => 'Engagé', 'total' => $totEngage, 'count' => $engagements->count(), 'items' => $engagements],
-                'approuve'  => ['label' => 'Approuvé', 'total' => $totApprouve, 'count' => $approbations->count(), 'items' => $approbations],
-                'programme' => ['label' => 'Programmé', 'total' => $totProgramme, 'count' => $programmations->count(), 'items' => $programmations],
-                'decaisse'  => ['label' => 'Décaissé', 'total' => $totDecaisse, 'count' => $decaissements->count(), 'items' => $decaissements],
+                'pledge'    => ['label' => 'Annoncé', 'total_mga' => $totPledge, 'count' => $pledges->count(), 'items' => $pledges],
+                'mobilise'  => ['label' => 'Mobilisé', 'total_mga' => $totMobilise, 'count' => $mobilisations->count(), 'items' => $mobilisations],
+                'engage'    => ['label' => 'Engagé', 'total_mga' => $totEngage, 'count' => $engagements->count(), 'items' => $engagements],
+                'approuve'  => ['label' => 'Approuvé', 'total_mga' => $totApprouve, 'count' => $approbations->count(), 'items' => $approbations],
+                'programme' => ['label' => 'Programmé', 'total_mga' => $totProgramme, 'count' => $programmations->count(), 'items' => $programmations],
+                'decaisse'  => ['label' => 'Décaissé', 'total_mga' => $totDecaisse, 'count' => $decaissements->count(), 'items' => $decaissements],
                 'audite'    => [
                     'label' => 'Audité / Dépensé',
-                    'total' => $totDepense,
+                    'total_mga' => $totDepense,
                     'total_audite' => $totAudite,
                     'count' => $depenses->count(),
                     'items' => $depenses
@@ -93,13 +93,13 @@ class BudgetCycleController extends Controller
                 'taux_execution'    => $totDecaisse > 0 ? round(($totDepense / $totDecaisse) * 100, 2) : null,
             ],
             'cascade' => [
-                ['stage' => 'Annoncé', 'montant' => $totPledge],
-                ['stage' => 'Mobilisé', 'montant' => $totMobilise],
-                ['stage' => 'Approuvé', 'montant' => $totApprouve],
-                ['stage' => 'Engagé', 'montant' => $totEngage],
-                ['stage' => 'Programmé', 'montant' => $totProgramme],
-                ['stage' => 'Décaissé', 'montant' => $totDecaisse],
-                ['stage' => 'Dépensé', 'montant' => $totDepense],
+                ['stage' => 'Annoncé', 'montant_mga' => $totPledge],
+                ['stage' => 'Mobilisé', 'montant_mga' => $totMobilise],
+                ['stage' => 'Approuvé', 'montant_mga' => $totApprouve],
+                ['stage' => 'Engagé', 'montant_mga' => $totEngage],
+                ['stage' => 'Programmé', 'montant_mga' => $totProgramme],
+                ['stage' => 'Décaissé', 'montant_mga' => $totDecaisse],
+                ['stage' => 'Dépensé', 'montant_mga' => $totDepense],
             ]
         ];
     }
